@@ -156,10 +156,18 @@ export interface Presets {
 
 // ── Chat Types ──────────────────────────────────────────────
 
+export interface ChatAttachment {
+  id: string;
+  filename: string;
+  type: string;       // MIME type, e.g. "image/png", "application/pdf"
+  thumbnail_url?: string;  // data-URI for image previews (client-side only)
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  attachments?: ChatAttachment[];
 }
 
 export interface AssessmentConfig {

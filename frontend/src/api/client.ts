@@ -62,6 +62,16 @@ export const api = {
   generatePackage: (config: Config) => postBlob('/generate', config),
   generateLanggraphPackage: (config: Config) => postBlob('/generate/langgraph', config),
 
+  // Chat file upload
+  chatUploadFile: async (sessionId: string, file: File) => {
+    const form = new FormData();
+    form.append('session_id', sessionId);
+    form.append('file', file);
+    const res = await fetch(`${API_BASE}/chat/upload`, { method: 'POST', body: form });
+    if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+    return res.json() as Promise<{ id: string; filename: string; type: string; size: number }>;
+  },
+
   // Assessment
   transformAssessment: (assessment: AssessmentConfig) =>
     post<Config>('/assessment/transform', assessment),

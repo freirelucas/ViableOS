@@ -13,6 +13,9 @@ interface ChatStore {
   isStreaming: boolean;
   error: string | null;
 
+  // File uploads
+  pendingFiles: File[];
+
   // Assessment
   assessmentData: AssessmentConfig | null;
 
@@ -25,6 +28,9 @@ interface ChatStore {
   setError: (error: string | null) => void;
   addMessage: (msg: ChatMessage) => void;
   appendToLastMessage: (chunk: string) => void;
+  addPendingFile: (file: File) => void;
+  removePendingFile: (index: number) => void;
+  clearPendingFiles: () => void;
   setAssessmentData: (data: AssessmentConfig | null) => void;
   reset: () => void;
 }
@@ -39,6 +45,8 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
   messages: [],
   isStreaming: false,
   error: null,
+
+  pendingFiles: [],
 
   assessmentData: null,
 
@@ -63,6 +71,14 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       return { messages: msgs };
     }),
 
+  addPendingFile: (file) =>
+    set((s) => ({ pendingFiles: [...s.pendingFiles, file] })),
+
+  removePendingFile: (index) =>
+    set((s) => ({ pendingFiles: s.pendingFiles.filter((_, i) => i !== index) })),
+
+  clearPendingFiles: () => set({ pendingFiles: [] }),
+
   setAssessmentData: (assessmentData) => set({ assessmentData }),
 
   reset: () =>
@@ -71,6 +87,7 @@ export const useChatStore = create<ChatStore>()((set, get) => ({
       messages: [],
       isStreaming: false,
       error: null,
+      pendingFiles: [],
       assessmentData: null,
     }),
 }));

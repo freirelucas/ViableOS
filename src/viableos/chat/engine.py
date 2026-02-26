@@ -10,7 +10,8 @@ import json
 import re
 from typing import Any, AsyncGenerator
 
-from viableos.chat.session import ChatSession, store
+from viableos.chat.files import IMAGE_TYPES, Attachment, file_store
+from viableos.chat.session import AttachmentMeta, ChatSession, store
 from viableos.chat.system_prompt import SYSTEM_PROMPT
 
 # Provider-to-LiteLLM model prefix mapping
@@ -51,7 +52,39 @@ def start_session(provider: str, model: str, api_key: str) -> ChatSession:
     return session
 
 
-async def send_message(session_id: str, user_message: str) -> AsyncGenerator[str, None]:
+def _build_multimodal_content(
+    user_message: str, attachments: list[Attachment],
+) -> str | list[dict[str, Any]]:
+    """Build LiteLLM content: plain string or multimodal content blocks."""
+    if not attachments:
+        return user_message
+
+    content_parts: list[dict[str, Any]] = []
+
+    # Text attachments (PDFs, TXT, etc.) as context before user message
+    for att in attachments:
+        if att.content_type not in IMAGE_TYPES and isinstance(att.llm_content, str):
+            content_parts.append({
+                "type": "text",
+                "text": f"[Attached file: {att.filename}]\n{att.llm_content}",
+            })
+
+    # User message
+    content_parts.append({"type": "text", "text": user_message})
+
+    # Image attachments as image_url blocks
+    for att in attachments:
+        if att.content_type in IMAGE_TYPES and isinstance(att.llm_content, dict):
+            content_parts.append(att.llm_content)
+
+    return content_parts
+
+
+async def send_message(
+    session_id: str,
+    user_message: str,
+    attachment_ids: list[str] | None = None,
+) -> AsyncGenerator[str, None]:
     """Send a user message and stream the assistant response.
 
     Yields chunks of the assistant response as they arrive.
@@ -64,15 +97,30 @@ async def send_message(session_id: str, user_message: str) -> AsyncGenerator[str
         yield "[ERROR] Session not found"
         return
 
-    session.add_message("user", user_message)
+    # Resolve attachments
+    attachments: list[Attachment] = []
+    att_meta: list[AttachmentMeta] = []
+    for att_id in (attachment_ids or []):
+        att = file_store.get(att_id)
+        if att:
+            attachments.append(att)
+            att_meta.append(AttachmentMeta(
+                id=att.id, filename=att.filename, content_type=att.content_type,
+            ))
+
+    # Store the user message (text only — attachments referenced by meta)
+    session.add_message("user", user_message, attachments=att_meta)
+
+    # Build LiteLLM messages — swap the last user message content for multimodal
+    messages = session.to_litellm_messages()
+    messages[-1]["content"] = _build_multimodal_content(user_message, attachments)
 
     model_id = _litellm_model_id(session.provider, session.model)
-    api_key_env = _extract_api_key_env(session.provider)
 
     try:
         response = await litellm.acompletion(
             model=model_id,
-            messages=session.to_litellm_messages(),
+            messages=messages,
             stream=True,
             api_key=session.api_key,
             max_tokens=4096,
@@ -129,7 +177,15 @@ def get_history(session_id: str) -> list[dict[str, Any]] | None:
     if session is None:
         return None
     return [
-        {"role": m.role, "content": m.content, "timestamp": m.timestamp}
+        {
+            "role": m.role,
+            "content": m.content,
+            "timestamp": m.timestamp,
+            "attachments": [
+                {"id": a.id, "filename": a.filename, "type": a.content_type}
+                for a in m.attachments
+            ],
+        }
         for m in session.messages
         if m.role != "system"
     ]

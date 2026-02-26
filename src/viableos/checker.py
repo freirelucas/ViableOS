@@ -379,7 +379,7 @@ def _check_success_criteria(vs: dict[str, Any]) -> list[Warning]:
             suggestion="Add success criteria to help the Optimizer track what matters.",
         ))
 
-    critical = [c for c in criteria if c.get("priority", "").lower() in ("kritisch", "critical", "höchste", "highest")]
+    critical = [c for c in criteria if str(c.get("priority", "")).lower() in ("1", "kritisch", "critical", "höchste", "highest")]
     if critical:
         has_s3star = bool(vs.get("system_3_star", {}).get("checks"))
         if not has_s3star:

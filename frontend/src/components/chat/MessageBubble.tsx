@@ -1,112 +1,13 @@
-import { Bot, User } from 'lucide-react';
+import { Bot, User, FileText, Paperclip } from 'lucide-react';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { ChatMessage } from '../../types';
 
 interface Props {
   message: ChatMessage;
   isStreaming?: boolean;
-}
-
-function renderMarkdown(text: string) {
-  // Simple markdown rendering: bold, italic, code blocks, inline code, lists, headers
-  const lines = text.split('\n');
-  const elements: (string | JSX.Element)[] = [];
-  let inCodeBlock = false;
-  let codeBlockContent: string[] = [];
-  let codeBlockLang = '';
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    if (line.startsWith('```')) {
-      if (!inCodeBlock) {
-        inCodeBlock = true;
-        codeBlockLang = line.slice(3).trim();
-        codeBlockContent = [];
-        continue;
-      } else {
-        inCodeBlock = false;
-        elements.push(
-          <pre key={`code-${i}`} className="bg-[var(--color-bg)] rounded-lg p-3 my-2 overflow-x-auto text-xs">
-            <code>{codeBlockContent.join('\n')}</code>
-          </pre>
-        );
-        continue;
-      }
-    }
-
-    if (inCodeBlock) {
-      codeBlockContent.push(line);
-      continue;
-    }
-
-    if (line.startsWith('### ')) {
-      elements.push(<h4 key={i} className="font-semibold text-sm mt-3 mb-1">{formatInline(line.slice(4))}</h4>);
-    } else if (line.startsWith('## ')) {
-      elements.push(<h3 key={i} className="font-bold text-sm mt-3 mb-1">{formatInline(line.slice(3))}</h3>);
-    } else if (line.startsWith('# ')) {
-      elements.push(<h2 key={i} className="font-bold mt-3 mb-1">{formatInline(line.slice(2))}</h2>);
-    } else if (/^\d+\.\s/.test(line)) {
-      elements.push(<div key={i} className="ml-4 my-0.5">{formatInline(line)}</div>);
-    } else if (line.startsWith('- ') || line.startsWith('* ')) {
-      elements.push(<div key={i} className="ml-4 my-0.5">{formatInline(line)}</div>);
-    } else if (line.trim() === '') {
-      elements.push(<div key={i} className="h-2" />);
-    } else {
-      elements.push(<p key={i} className="my-0.5">{formatInline(line)}</p>);
-    }
-  }
-
-  return <>{elements}</>;
-}
-
-function formatInline(text: string): string | JSX.Element {
-  // Replace **bold**, *italic*, `code`
-  const parts: (string | JSX.Element)[] = [];
-  let remaining = text;
-  let key = 0;
-
-  while (remaining.length > 0) {
-    // Bold
-    const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
-    // Inline code
-    const codeMatch = remaining.match(/`([^`]+)`/);
-
-    let firstMatch: { index: number; length: number; element: JSX.Element; raw: string } | null = null;
-
-    if (boldMatch && boldMatch.index !== undefined) {
-      const candidate = {
-        index: boldMatch.index,
-        length: boldMatch[0].length,
-        element: <strong key={key++}>{boldMatch[1]}</strong>,
-        raw: boldMatch[0],
-      };
-      if (!firstMatch || candidate.index < firstMatch.index) firstMatch = candidate;
-    }
-
-    if (codeMatch && codeMatch.index !== undefined) {
-      const candidate = {
-        index: codeMatch.index,
-        length: codeMatch[0].length,
-        element: <code key={key++} className="bg-[var(--color-bg)] px-1 py-0.5 rounded text-xs">{codeMatch[1]}</code>,
-        raw: codeMatch[0],
-      };
-      if (!firstMatch || candidate.index < firstMatch.index) firstMatch = candidate;
-    }
-
-    if (firstMatch) {
-      if (firstMatch.index > 0) {
-        parts.push(remaining.slice(0, firstMatch.index));
-      }
-      parts.push(firstMatch.element);
-      remaining = remaining.slice(firstMatch.index + firstMatch.length);
-    } else {
-      parts.push(remaining);
-      break;
-    }
-  }
-
-  if (parts.length === 1 && typeof parts[0] === 'string') return parts[0];
-  return <>{parts}</>;
 }
 
 export function MessageBubble({ message, isStreaming }: Props) {
@@ -130,7 +31,88 @@ export function MessageBubble({ message, isStreaming }: Props) {
             : 'bg-[var(--color-card)] text-[var(--color-text)] border border-[var(--color-border)]'
         }`}
       >
-        {isUser ? message.content : renderMarkdown(message.content)}
+        {/* Attachment thumbnails */}
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="flex gap-2 flex-wrap mb-2">
+            {message.attachments.map((att) => (
+              <div key={att.id}>
+                {att.thumbnail_url ? (
+                  <div className="w-20 h-20 rounded-lg overflow-hidden border border-white/20">
+                    <img src={att.thumbnail_url} alt={att.filename} className="w-full h-full object-cover" />
+                  </div>
+                ) : att.type === 'application/pdf' ? (
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs ${
+                    isUser ? 'bg-white/15' : 'bg-[var(--color-bg)] border border-[var(--color-border)]'
+                  }`}>
+                    <FileText className="w-3 h-3" />
+                    <span className="max-w-[100px] truncate">{att.filename}</span>
+                  </div>
+                ) : (
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs ${
+                    isUser ? 'bg-white/15' : 'bg-[var(--color-bg)] border border-[var(--color-border)]'
+                  }`}>
+                    <Paperclip className="w-3 h-3" />
+                    <span className="max-w-[100px] truncate">{att.filename}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Message content */}
+        {isUser ? (
+          <div className="whitespace-pre-wrap">{message.content}</div>
+        ) : (
+          <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                code({ className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  const code = String(children).replace(/\n$/, '');
+                  if (match) {
+                    return (
+                      <SyntaxHighlighter
+                        style={oneDark}
+                        language={match[1]}
+                        PreTag="div"
+                        customStyle={{ margin: '0.5em 0', borderRadius: '0.5rem', fontSize: '12px' }}
+                      >
+                        {code}
+                      </SyntaxHighlighter>
+                    );
+                  }
+                  return (
+                    <code className="bg-[var(--color-border)]/50 px-1 py-0.5 rounded text-xs" {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+                table({ children }) {
+                  return (
+                    <div className="overflow-x-auto my-2">
+                      <table className="text-xs border-collapse w-full [&_th]:border [&_th]:border-[var(--color-border)] [&_th]:px-2 [&_th]:py-1 [&_th]:bg-[var(--color-bg)] [&_td]:border [&_td]:border-[var(--color-border)] [&_td]:px-2 [&_td]:py-1">
+                        {children}
+                      </table>
+                    </div>
+                  );
+                },
+                a({ href, children }) {
+                  return (
+                    <a href={href} target="_blank" rel="noopener noreferrer" className="text-[var(--color-primary)] underline">
+                      {children}
+                    </a>
+                  );
+                },
+              }}
+            >
+              {message.content}
+            </Markdown>
+          </div>
+        )}
+
+        {/* Streaming cursor */}
         {isStreaming && !isUser && (
           <span className="inline-block w-2 h-4 ml-1 bg-[var(--color-primary)] animate-pulse rounded-sm" />
         )}

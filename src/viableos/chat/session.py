@@ -13,10 +13,19 @@ from typing import Any
 
 
 @dataclass
+class AttachmentMeta:
+    """Lightweight attachment metadata stored with messages."""
+    id: str
+    filename: str
+    content_type: str
+
+
+@dataclass
 class ChatMessage:
     role: str  # "user" | "assistant" | "system"
-    content: str
+    content: str  # text content (or used as-is for system/assistant)
     timestamp: float = field(default_factory=time.time)
+    attachments: list[AttachmentMeta] = field(default_factory=list)
 
 
 @dataclass
@@ -29,12 +38,17 @@ class ChatSession:
     created_at: float = field(default_factory=time.time)
     assessment_data: dict[str, Any] | None = None
 
-    def to_litellm_messages(self) -> list[dict[str, str]]:
+    def to_litellm_messages(self) -> list[dict[str, Any]]:
         """Convert session messages to LiteLLM format."""
         return [{"role": m.role, "content": m.content} for m in self.messages]
 
-    def add_message(self, role: str, content: str) -> ChatMessage:
-        msg = ChatMessage(role=role, content=content)
+    def add_message(
+        self,
+        role: str,
+        content: str,
+        attachments: list[AttachmentMeta] | None = None,
+    ) -> ChatMessage:
+        msg = ChatMessage(role=role, content=content, attachments=attachments or [])
         self.messages.append(msg)
         return msg
 
@@ -45,6 +59,10 @@ class ChatSession:
                 "role": m.role,
                 "content": m.content,
                 "timestamp": m.timestamp,
+                "attachments": [
+                    {"id": a.id, "filename": a.filename, "type": a.content_type}
+                    for a in m.attachments
+                ],
             }
             for m in self.messages
         ]
