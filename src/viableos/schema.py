@@ -10,6 +10,181 @@ import yaml
 
 _STRING_ARRAY = {"type": "array", "items": {"type": "string"}}
 
+# ── Reusable sub-schemas for behavioral specs ──
+
+_OPERATIONAL_MODE_CONFIG = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "description": {"type": "string"},
+        "triggers": _STRING_ARRAY,
+        "s1_autonomy": {
+            "type": "string",
+            "enum": ["full", "standard", "restricted"],
+        },
+        "reporting_frequency": {"type": "string"},
+        "escalation_threshold": {"type": "string"},
+        "human_required": {"type": "boolean"},
+    },
+}
+
+_ESCALATION_PATH = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "path": _STRING_ARRAY,
+        "timeout_per_step": {"type": "string"},
+        "description": {"type": "string"},
+        "triggers": _STRING_ARRAY,
+    },
+}
+
+_AUTONOMY_LEVELS = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "can_do_alone": _STRING_ARRAY,
+        "needs_coordination": _STRING_ARRAY,
+        "needs_approval": _STRING_ARRAY,
+    },
+}
+
+_CONFLICT_DETECTION = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "resource_overlaps": {"type": "boolean"},
+        "deadline_conflicts": {"type": "boolean"},
+        "output_contradictions": {"type": "boolean"},
+        "custom_triggers": _STRING_ARRAY,
+    },
+}
+
+_TRANSDUCTION_MAPPING = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "from_unit": {"type": "string"},
+        "to_unit": {"type": "string"},
+        "translation": {"type": "string"},
+    },
+}
+
+_TRIPLE_INDEX = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "actuality": {"type": "string"},
+        "capability": {"type": "string"},
+        "potentiality": {"type": "string"},
+        "measurement": {"type": "string"},
+    },
+}
+
+_DEVIATION_LOGIC = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "report_only_deviations": {"type": "boolean"},
+        "threshold_percent": {"type": "number"},
+        "trend_detection": {"type": "boolean"},
+    },
+}
+
+_INTERVENTION_AUTHORITY = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "can_restrict_s1": {"type": "boolean"},
+        "requires_documentation": {"type": "boolean"},
+        "requires_human_approval": {"type": "boolean"},
+        "max_duration": {"type": "string"},
+        "allowed_actions": _STRING_ARRAY,
+    },
+}
+
+_PROVIDER_CONSTRAINT = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "must_differ_from": {
+            "type": "string",
+            "enum": ["s1", "all"],
+        },
+        "reason": {"type": "string"},
+    },
+}
+
+_STRATEGIC_PREMISE = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "premise": {"type": "string"},
+        "check_frequency": {"type": "string"},
+        "invalidation_signal": {"type": "string"},
+        "consequence_if_invalid": {"type": "string"},
+    },
+}
+
+_STRATEGY_BRIDGE = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "injection_point": {"type": "string"},
+        "format": {"type": "string"},
+        "recipient": {"type": "string"},
+    },
+}
+
+_WEAK_SIGNALS = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "enabled": {"type": "boolean"},
+        "sources": _STRING_ARRAY,
+        "detection_method": {"type": "string"},
+    },
+}
+
+_BALANCE_MONITORING = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "s3_vs_s4_target": {"type": "string"},
+        "measurement": {"type": "string"},
+        "alert_if_exceeds": {"type": "string"},
+    },
+}
+
+_ALGEDONIC_CHANNEL = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "enabled": {"type": "boolean"},
+        "who_can_send": {
+            "type": "string",
+            "enum": ["all_agents", "s1_only"],
+        },
+        "triggers": _STRING_ARRAY,
+        "bypasses_hierarchy": {"type": "boolean"},
+    },
+}
+
+_BASTA_CONSTRAINT = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "description": {"type": "string"},
+        "examples": _STRING_ARRAY,
+        "agent_role": {
+            "type": "string",
+            "enum": ["prepare_only"],
+        },
+    },
+}
+
+# ── Main schema ──
+
 VIABLEOS_SCHEMA: dict[str, Any] = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
@@ -126,6 +301,9 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                         "values": _STRING_ARRAY,
                         "never_do": _STRING_ARRAY,
                         "decisions_requiring_human": _STRING_ARRAY,
+                        "balance_monitoring": _BALANCE_MONITORING,
+                        "algedonic_channel": _ALGEDONIC_CHANNEL,
+                        "basta_constraint": _BASTA_CONSTRAINT,
                     },
                 },
                 "system_1": {
@@ -168,6 +346,7 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                                     },
                                 },
                             },
+                            "autonomy_levels": _AUTONOMY_LEVELS,
                         },
                     },
                 },
@@ -193,6 +372,13 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                                 },
                             },
                         },
+                        "conflict_detection": _CONFLICT_DETECTION,
+                        "transduction_mappings": {
+                            "type": "array",
+                            "items": _TRANSDUCTION_MAPPING,
+                        },
+                        "escalation_to_s3_after": {"type": "string"},
+                        "label": {"type": "string"},
                     },
                 },
                 "system_3": {
@@ -203,6 +389,9 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                         "resource_allocation": {"type": "string"},
                         "kpi_list": _STRING_ARRAY,
                         "label": {"type": "string"},
+                        "triple_index": _TRIPLE_INDEX,
+                        "deviation_logic": _DEVIATION_LOGIC,
+                        "intervention_authority": _INTERVENTION_AUTHORITY,
                     },
                 },
                 "system_3_star": {
@@ -229,11 +418,19 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                                         "type": "string",
                                         "minLength": 1,
                                     },
+                                    "data_source": {"type": "string"},
+                                    "comparison": {"type": "string"},
                                 },
                             },
                         },
                         "on_failure": {"type": "string"},
                         "label": {"type": "string"},
+                        "provider_constraint": _PROVIDER_CONSTRAINT,
+                        "reporting_target": {
+                            "type": "string",
+                            "enum": ["s3", "s3_and_human"],
+                        },
+                        "independence_rules": _STRING_ARRAY,
                     },
                 },
                 "system_4": {
@@ -250,6 +447,12 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                             },
                         },
                         "label": {"type": "string"},
+                        "premises_register": {
+                            "type": "array",
+                            "items": _STRATEGIC_PREMISE,
+                        },
+                        "strategy_bridge": _STRATEGY_BRIDGE,
+                        "weak_signals": _WEAK_SIGNALS,
                     },
                 },
                 "success_criteria": {
@@ -284,6 +487,39 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                             "from": {"type": "string"},
                             "to": {"type": "string"},
                             "description": {"type": "string"},
+                        },
+                    },
+                },
+                # ── Behavioral Specs (top-level) ──
+                "operational_modes": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "normal": _OPERATIONAL_MODE_CONFIG,
+                        "elevated": _OPERATIONAL_MODE_CONFIG,
+                        "crisis": _OPERATIONAL_MODE_CONFIG,
+                    },
+                },
+                "escalation_chains": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "operational": _ESCALATION_PATH,
+                        "quality": _ESCALATION_PATH,
+                        "strategic": _ESCALATION_PATH,
+                        "algedonic": _ESCALATION_PATH,
+                    },
+                },
+                "vollzug_protocol": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "enabled": {"type": "boolean"},
+                        "timeout_quittung": {"type": "string"},
+                        "timeout_vollzug": {"type": "string"},
+                        "on_timeout": {
+                            "type": "string",
+                            "enum": ["escalate", "remind", "alert_human"],
                         },
                     },
                 },

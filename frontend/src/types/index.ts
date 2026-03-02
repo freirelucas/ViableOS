@@ -6,6 +6,13 @@ export interface Template {
   units: number;
 }
 
+// ── S1 Autonomy Levels ──
+export interface AutonomyLevels {
+  can_do_alone: string[];
+  needs_coordination: string[];
+  needs_approval: string[];
+}
+
 export interface S1Unit {
   name: string;
   purpose: string;
@@ -13,6 +20,27 @@ export interface S1Unit {
   tools?: string[];
   model?: string;
   weight?: number;
+  autonomy_levels?: AutonomyLevels;
+}
+
+// ── S5 / Identity Extensions ──
+export interface BalanceMonitoring {
+  s3_vs_s4_target: string;
+  measurement: string;
+  alert_if_exceeds: string;
+}
+
+export interface AlgedonicChannel {
+  enabled: boolean;
+  who_can_send: 'all_agents' | 's1_only';
+  triggers: string[];
+  bypasses_hierarchy: boolean;
+}
+
+export interface BastaConstraint {
+  description: string;
+  examples: string[];
+  agent_role: 'prepare_only';
 }
 
 export interface Identity {
@@ -20,6 +48,9 @@ export interface Identity {
   values?: string[];
   never_do?: string[];
   decisions_requiring_human?: string[];
+  balance_monitoring?: BalanceMonitoring;
+  algedonic_channel?: AlgedonicChannel;
+  basta_constraint?: BastaConstraint;
 }
 
 export interface CoordinationRule {
@@ -61,6 +92,101 @@ export interface Persistence {
   path?: string;
 }
 
+// ── Operational Modes ──
+export interface OperationalModeConfig {
+  description: string;
+  triggers?: string[];
+  s1_autonomy: 'full' | 'standard' | 'restricted';
+  reporting_frequency: string;
+  escalation_threshold: string;
+  human_required?: boolean;
+}
+
+export interface OperationalModes {
+  normal: OperationalModeConfig;
+  elevated: OperationalModeConfig;
+  crisis: OperationalModeConfig;
+}
+
+// ── Escalation Chains ──
+export interface EscalationPath {
+  path: string[];
+  timeout_per_step: string;
+  description?: string;
+  triggers?: string[];
+}
+
+export interface EscalationChains {
+  operational: EscalationPath;
+  quality: EscalationPath;
+  strategic: EscalationPath;
+  algedonic: EscalationPath;
+}
+
+// ── Vollzug Protocol ──
+export interface VollzugProtocol {
+  enabled: boolean;
+  timeout_quittung: string;
+  timeout_vollzug: string;
+  on_timeout: 'escalate' | 'remind' | 'alert_human';
+}
+
+// ── S2 Extensions ──
+export interface ConflictDetection {
+  resource_overlaps: boolean;
+  deadline_conflicts: boolean;
+  output_contradictions: boolean;
+  custom_triggers?: string[];
+}
+
+export interface TransductionMapping {
+  from_unit: string;
+  to_unit: string;
+  translation: string;
+}
+
+// ── S3 Extensions ──
+export interface TripleIndex {
+  actuality: string;
+  capability: string;
+  potentiality: string;
+  measurement: string;
+}
+
+export interface DeviationLogic {
+  report_only_deviations: boolean;
+  threshold_percent: number;
+  trend_detection: boolean;
+}
+
+export interface InterventionAuthority {
+  can_restrict_s1: boolean;
+  requires_documentation: boolean;
+  requires_human_approval: boolean;
+  max_duration: string;
+  allowed_actions: string[];
+}
+
+// ── S3* Extensions ──
+export interface ProviderConstraint {
+  must_differ_from: 's1' | 'all';
+  reason: string;
+}
+
+// ── S4 Extensions ──
+export interface StrategicPremise {
+  premise: string;
+  check_frequency: string;
+  invalidation_signal: string;
+  consequence_if_invalid: string;
+}
+
+export interface StrategyBridge {
+  injection_point: string;
+  format: string;
+  recipient: string;
+}
+
 export interface ViableSystem {
   name: string;
   runtime?: string;
@@ -68,13 +194,27 @@ export interface ViableSystem {
   system_1: S1Unit[];
   system_2?: {
     coordination_rules?: CoordinationRule[];
+    conflict_detection?: ConflictDetection;
+    transduction_mappings?: TransductionMapping[];
+    escalation_to_s3_after?: string;
+    label?: string;
   };
   system_3?: {
     reporting_rhythm?: string;
     resource_allocation?: string;
+    kpi_list?: string[];
+    label?: string;
+    triple_index?: TripleIndex;
+    deviation_logic?: DeviationLogic;
+    intervention_authority?: InterventionAuthority;
   };
   system_3_star?: {
-    checks?: Array<{ name: string; target: string; on_failure?: string }>;
+    checks?: Array<{ name: string; target: string; method: string; data_source?: string; comparison?: string }>;
+    on_failure?: string;
+    label?: string;
+    provider_constraint?: ProviderConstraint;
+    reporting_target?: 's3' | 's3_and_human';
+    independence_rules?: string[];
   };
   system_4?: {
     monitoring?: {
@@ -82,11 +222,18 @@ export interface ViableSystem {
       technology?: string[];
       regulation?: string[];
     };
+    label?: string;
+    premises_register?: StrategicPremise[];
+    strategy_bridge?: StrategyBridge;
+    weak_signals?: { enabled: boolean; sources?: string[]; detection_method?: string };
   };
   budget?: Budget;
   model_routing?: ModelRouting;
   human_in_the_loop?: HumanInTheLoop;
   persistence?: Persistence;
+  operational_modes?: OperationalModes;
+  escalation_chains?: EscalationChains;
+  vollzug_protocol?: VollzugProtocol;
 }
 
 export interface Config {

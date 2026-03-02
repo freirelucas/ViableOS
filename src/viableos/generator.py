@@ -136,8 +136,43 @@ Before marking any task as done:
 {tools_section}{autonomy_section}{never_do_section}"""
 
 
-def _generate_s2_skill(s1_names: list[str]) -> str:
+def _generate_s2_skill(
+    s1_names: list[str],
+    *,
+    conflict_detection: dict[str, Any] | None = None,
+    transduction_mappings: list[dict[str, Any]] | None = None,
+) -> str:
     unit_list = "\n".join(f"- {n}" for n in s1_names)
+
+    # ── Conflict Detection section ──
+    conflict_section = ""
+    if conflict_detection:
+        checks = []
+        if conflict_detection.get("resource_overlaps"):
+            checks.append("- Ressourcen-Überlappung zwischen Einheiten erkennen")
+        if conflict_detection.get("deadline_conflicts"):
+            checks.append("- Terminkonflikte erkennen")
+        if conflict_detection.get("output_contradictions"):
+            checks.append("- Widersprüchliche Outputs erkennen")
+        for trigger in conflict_detection.get("custom_triggers", []):
+            checks.append(f"- {trigger}")
+        if checks:
+            conflict_section = f"""
+## Conflict Detection (automatisch)
+{chr(10).join(checks)}
+"""
+
+    # ── Transduction section ──
+    transduction_section = ""
+    if transduction_mappings:
+        lines = []
+        for m in transduction_mappings:
+            lines.append(f"- {m['from_unit']} → {m['to_unit']}: {m['translation']}")
+        transduction_section = f"""
+## Fachsprachen-Übersetzung (Transduktion)
+{chr(10).join(lines)}
+"""
+
     return f"""# Coordinator — Coordination Skills
 
 ## Coordination Protocol
@@ -160,7 +195,7 @@ def _generate_s2_skill(s1_names: list[str]) -> str:
 2. Inform: notify both parties with context
 3. Mediate: suggest a resolution
 4. Escalate: if mediation fails within 2 rounds → escalate to Optimizer (S3)
-
+{conflict_section}{transduction_section}
 ## Anti-Loop Rules
 - If you've sent the same notification twice, STOP
 - If two units are in a back-and-forth, intervene after 3 rounds
@@ -177,7 +212,28 @@ def _generate_s2_skill(s1_names: list[str]) -> str:
 """
 
 
-def _generate_s3_skill(budget_monthly: float) -> str:
+def _generate_s3_skill(
+    budget_monthly: float,
+    *,
+    intervention_authority: dict[str, Any] | None = None,
+) -> str:
+    # ── Intervention Authority section ──
+    intervention_section = ""
+    if intervention_authority:
+        actions = "\n".join(
+            f"- {a}" for a in intervention_authority.get("allowed_actions", [])
+        )
+        max_dur = intervention_authority.get("max_duration", "48h")
+        needs_human = intervention_authority.get("requires_human_approval", False)
+        intervention_section = f"""
+## Interventionsrecht (Kanal 3)
+Du DARFST in begründeten Fällen:
+{actions}
+Jede Intervention muss dokumentiert und begründet werden.
+Maximale Dauer ohne Mensch-Bestätigung: {max_dur}.
+{"Jede Intervention braucht vorab Mensch-Genehmigung." if needs_human else "Du darfst in akuten Fällen sofort handeln — Dokumentation danach."}
+"""
+
     return f"""# Optimizer — Reporting Skills
 
 ## Reporting Protocol
@@ -197,7 +253,7 @@ def _generate_s3_skill(budget_monthly: float) -> str:
 - Review unit performance weekly
 - Reallocate budget from underperforming to high-value units
 - Document every allocation change with reasoning
-
+{intervention_section}
 ## Anti-Loop Rules
 - If your analysis produces the same result as last time: re-evaluate inputs
 - If weekly digest is identical to last week: flag stagnation
@@ -253,12 +309,41 @@ All inter-agent communication uses structured format:
 """
 
 
-def _generate_s4_skill(monitoring: dict[str, Any]) -> str:
+def _generate_s4_skill(
+    monitoring: dict[str, Any],
+    *,
+    premises_register: list[dict[str, Any]] | None = None,
+    strategy_bridge: dict[str, Any] | None = None,
+) -> str:
     sources = []
     for key in ["competitors", "technology", "regulation"]:
         items = monitoring.get(key, [])
         sources.extend(items)
     sources_text = "\n".join(f"- {s}" for s in sources) if sources else "- (configure in wizard)"
+
+    # ── Premises Register section ──
+    premises_section = ""
+    if premises_register:
+        lines = []
+        for p in premises_register:
+            lines.append(
+                f"- **{p['premise']}** (prüfen: {p.get('check_frequency', '?')})"
+            )
+        premises_section = f"""
+## Prämissen-Register
+Folgende Annahmen kontinuierlich prüfen:
+{chr(10).join(lines)}
+"""
+
+    # ── Strategy Bridge section ──
+    bridge_section = ""
+    if strategy_bridge:
+        bridge_section = f"""
+## Strategy Bridge
+Erkenntnisse einspeisen: {strategy_bridge.get('injection_point', '?')}
+Format: {strategy_bridge.get('format', '?')}
+Empfänger: {strategy_bridge.get('recipient', '?')}
+"""
 
     return f"""# Scout — Intelligence Skills
 
@@ -282,7 +367,7 @@ def _generate_s4_skill(monitoring: dict[str, Any]) -> str:
 - What does it mean for us concretely?
 - What options arise?
 - Time horizon: 3-12 months (not 3-5 years)
-
+{premises_section}{bridge_section}
 ## Anti-Loop Rules
 - If scanning the same sources produces no new insights for 2 weeks: expand sources
 - Never repeat the same strategic recommendation without new evidence
@@ -340,8 +425,33 @@ All inter-agent communication uses structured format:
 # ── HEARTBEAT.md generators ─────────────────────────────────────────────────
 
 
-def _generate_s1_heartbeat(unit: dict[str, Any]) -> str:
+def _render_heartbeat_mode_table(operational_modes: dict[str, Any] | None) -> str:
+    """Render the mode-dependent frequency table for any HEARTBEAT.md."""
+    if not operational_modes:
+        return ""
+    normal = operational_modes.get("normal", {})
+    elevated = operational_modes.get("elevated", {})
+    crisis = operational_modes.get("crisis", {})
+    return f"""
+## Frequenzen nach Betriebsmodus
+
+| Check | Normal | Erhöht | Krise |
+|-------|--------|--------|-------|
+| Status-Report | {normal.get('reporting_frequency', 'weekly')} | {elevated.get('reporting_frequency', 'daily')} | {crisis.get('reporting_frequency', 'hourly')} |
+| Vollzugs-Check | daily | every 4h | hourly |
+| Prämissen-Check (S4) | monthly | weekly | daily |
+| Balance-Check (S5) | weekly | daily | daily |
+| Audit-Sample (S3*) | every 4h | every 2h | every 1h |
+"""
+
+
+def _generate_s1_heartbeat(
+    unit: dict[str, Any],
+    *,
+    operational_modes: dict[str, Any] | None = None,
+) -> str:
     name = unit.get("name", "Agent")
+    mode_table = _render_heartbeat_mode_table(operational_modes)
     return f"""# {name} — Heartbeat Schedule
 
 ## Every 30 minutes
@@ -360,11 +470,15 @@ def _generate_s1_heartbeat(unit: dict[str, Any]) -> str:
 ## On task completion
 - Notify Coordinator (S2) with result summary
 - Update MEMORY.md with key learnings
-"""
+{mode_table}"""
 
 
-def _generate_s2_heartbeat() -> str:
-    return """# Coordinator — Heartbeat Schedule
+def _generate_s2_heartbeat(
+    *,
+    operational_modes: dict[str, Any] | None = None,
+) -> str:
+    mode_table = _render_heartbeat_mode_table(operational_modes)
+    return f"""# Coordinator — Heartbeat Schedule
 
 ## Every 15 minutes
 - Check all S1 unit session statuses
@@ -377,11 +491,15 @@ def _generate_s2_heartbeat() -> str:
 ## Daily (8:30 AM)
 - Coordination digest to Optimizer (S3): conflicts resolved, pending issues
 - Refresh awareness of all active S1 units and their current tasks
-"""
+{mode_table}"""
 
 
-def _generate_s3_heartbeat() -> str:
-    return """# Optimizer — Heartbeat Schedule
+def _generate_s3_heartbeat(
+    *,
+    operational_modes: dict[str, Any] | None = None,
+) -> str:
+    mode_table = _render_heartbeat_mode_table(operational_modes)
+    return f"""# Optimizer — Heartbeat Schedule
 
 ## Every hour
 - Check token usage across all agents
@@ -400,11 +518,15 @@ def _generate_s3_heartbeat() -> str:
 ## Monthly (1st of month)
 - Full budget review and reallocation recommendations
 - Model performance assessment: should any agent switch models?
-"""
+{mode_table}"""
 
 
-def _generate_s3star_heartbeat() -> str:
-    return """# Auditor — Heartbeat Schedule
+def _generate_s3star_heartbeat(
+    *,
+    operational_modes: dict[str, Any] | None = None,
+) -> str:
+    mode_table = _render_heartbeat_mode_table(operational_modes)
+    return f"""# Auditor — Heartbeat Schedule
 
 ## Every 4 hours
 - Sample 2 recent outputs from random S1 agents
@@ -418,11 +540,15 @@ def _generate_s3star_heartbeat() -> str:
 ## Weekly (Wednesday)
 - Full audit report: all findings, trends, recommendations
 - Cross-provider verification stats: agreement rate, discrepancies found
-"""
+{mode_table}"""
 
 
-def _generate_s4_heartbeat() -> str:
-    return """# Scout — Heartbeat Schedule
+def _generate_s4_heartbeat(
+    *,
+    operational_modes: dict[str, Any] | None = None,
+) -> str:
+    mode_table = _render_heartbeat_mode_table(operational_modes)
+    return f"""# Scout — Heartbeat Schedule
 
 ## Daily (7:00 AM)
 - Scan all configured sources for relevant changes
@@ -436,11 +562,15 @@ def _generate_s4_heartbeat() -> str:
 ## Monthly
 - Source review: are current sources still relevant? What's missing?
 - Trend report: what patterns are emerging across multiple sources?
-"""
+{mode_table}"""
 
 
-def _generate_s5_heartbeat() -> str:
-    return """# Policy Guardian — Heartbeat Schedule
+def _generate_s5_heartbeat(
+    *,
+    operational_modes: dict[str, Any] | None = None,
+) -> str:
+    mode_table = _render_heartbeat_mode_table(operational_modes)
+    return f"""# Policy Guardian — Heartbeat Schedule
 
 ## Every 2 hours
 - Check for pending human decisions
@@ -457,7 +587,7 @@ def _generate_s5_heartbeat() -> str:
 ## Quarterly
 - Values review: remind human to review and update organizational values
 - Policy update: any standing policies need revision?
-"""
+{mode_table}"""
 
 
 # ── USER.md generator ────────────────────────────────────────────────────────
@@ -549,6 +679,14 @@ def generate_openclaw_package(
     domain_flow = vs.get("domain_flow")
     success_criteria = vs.get("success_criteria", [])
 
+    # ── Behavioral Specs (from assessment transformer) ──
+    operational_modes = vs.get("operational_modes")
+    escalation_chains = vs.get("escalation_chains")
+    vollzug_protocol = vs.get("vollzug_protocol")
+    s2_cfg = vs.get("system_2", {})
+    conflict_detection = s2_cfg.get("conflict_detection")
+    transduction_mappings = s2_cfg.get("transduction_mappings")
+
     auto_rules = generate_base_rules(s1_units)
     dep_rules = generate_dependency_rules(dependencies) if dependencies else []
     shared_rules = generate_shared_resource_rules(shared_resources) if shared_resources else []
@@ -581,10 +719,15 @@ def generate_openclaw_package(
         soul = generate_s1_soul(
             unit, identity, coord_rules, hitl, other_units,
             dependencies=dependencies, domain_flow=domain_flow,
+            operational_modes=operational_modes,
+            escalation_chains=escalation_chains,
+            vollzug_protocol=vollzug_protocol,
         )
         (ws_path / "SOUL.md").write_text(soul)
         (ws_path / "SKILL.md").write_text(_generate_s1_skill(unit, identity))
-        (ws_path / "HEARTBEAT.md").write_text(_generate_s1_heartbeat(unit))
+        (ws_path / "HEARTBEAT.md").write_text(
+            _generate_s1_heartbeat(unit, operational_modes=operational_modes)
+        )
         (ws_path / "USER.md").write_text(user_md)
         (ws_path / "MEMORY.md").write_text(_generate_memory_md(name, "Operations (S1)"))
 
@@ -621,10 +764,22 @@ def generate_openclaw_package(
     soul = generate_s2_soul(
         coord_rules, s1_names, identity,
         shared_resources=shared_resources, domain_flow=domain_flow, label=s2_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        conflict_detection=conflict_detection,
+        transduction_mappings=transduction_mappings,
     )
     (ws_path / "SOUL.md").write_text(soul)
-    (ws_path / "SKILL.md").write_text(_generate_s2_skill(s1_names))
-    (ws_path / "HEARTBEAT.md").write_text(_generate_s2_heartbeat())
+    (ws_path / "SKILL.md").write_text(
+        _generate_s2_skill(
+            s1_names,
+            conflict_detection=conflict_detection,
+            transduction_mappings=transduction_mappings,
+        )
+    )
+    (ws_path / "HEARTBEAT.md").write_text(
+        _generate_s2_heartbeat(operational_modes=operational_modes)
+    )
     (ws_path / "USER.md").write_text(user_md)
     (ws_path / "MEMORY.md").write_text(_generate_memory_md(s2_display, "Coordination (S2)"))
     all_agents.append(
@@ -652,10 +807,22 @@ def generate_openclaw_package(
         kpi_list=s3_cfg.get("kpi_list"),
         success_criteria=success_criteria if success_criteria else None,
         label=s3_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        triple_index=s3_cfg.get("triple_index"),
+        deviation_logic=s3_cfg.get("deviation_logic"),
+        intervention_authority=s3_cfg.get("intervention_authority"),
     )
     (ws_path / "SOUL.md").write_text(soul)
-    (ws_path / "SKILL.md").write_text(_generate_s3_skill(plan.total_monthly_usd))
-    (ws_path / "HEARTBEAT.md").write_text(_generate_s3_heartbeat())
+    (ws_path / "SKILL.md").write_text(
+        _generate_s3_skill(
+            plan.total_monthly_usd,
+            intervention_authority=s3_cfg.get("intervention_authority"),
+        )
+    )
+    (ws_path / "HEARTBEAT.md").write_text(
+        _generate_s3_heartbeat(operational_modes=operational_modes)
+    )
     (ws_path / "USER.md").write_text(user_md)
     (ws_path / "MEMORY.md").write_text(_generate_memory_md(s3_display, "Optimization (S3)"))
     all_agents.append(
@@ -679,10 +846,19 @@ def generate_openclaw_package(
     s3star_display = s3star_label or "Auditor"
     checks = s3star_cfg.get("checks", [])
     on_failure = s3star_cfg.get("on_failure", "Escalate to human immediately")
-    soul = generate_s3star_soul(identity, checks, s1_names, on_failure, label=s3star_label)
+    soul = generate_s3star_soul(
+        identity, checks, s1_names, on_failure, label=s3star_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        provider_constraint=s3star_cfg.get("provider_constraint"),
+        independence_rules=s3star_cfg.get("independence_rules"),
+        reporting_target=s3star_cfg.get("reporting_target"),
+    )
     (ws_path / "SOUL.md").write_text(soul)
     (ws_path / "SKILL.md").write_text(_generate_s3star_skill())
-    (ws_path / "HEARTBEAT.md").write_text(_generate_s3star_heartbeat())
+    (ws_path / "HEARTBEAT.md").write_text(
+        _generate_s3star_heartbeat(operational_modes=operational_modes)
+    )
     (ws_path / "USER.md").write_text(user_md)
     (ws_path / "MEMORY.md").write_text(_generate_memory_md(s3star_display, "Audit (S3*)"))
     all_agents.append(
@@ -705,10 +881,25 @@ def generate_openclaw_package(
     s4_model = plan.model_routing.get("s4_intelligence", "")
     s4_label = s4_cfg.get("label", "")
     s4_display = s4_label or "Scout"
-    soul = generate_s4_soul(identity, monitoring, label=s4_label)
+    soul = generate_s4_soul(
+        identity, monitoring, label=s4_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        premises_register=s4_cfg.get("premises_register"),
+        strategy_bridge=s4_cfg.get("strategy_bridge"),
+        weak_signals=s4_cfg.get("weak_signals"),
+    )
     (ws_path / "SOUL.md").write_text(soul)
-    (ws_path / "SKILL.md").write_text(_generate_s4_skill(monitoring))
-    (ws_path / "HEARTBEAT.md").write_text(_generate_s4_heartbeat())
+    (ws_path / "SKILL.md").write_text(
+        _generate_s4_skill(
+            monitoring,
+            premises_register=s4_cfg.get("premises_register"),
+            strategy_bridge=s4_cfg.get("strategy_bridge"),
+        )
+    )
+    (ws_path / "HEARTBEAT.md").write_text(
+        _generate_s4_heartbeat(operational_modes=operational_modes)
+    )
     (ws_path / "USER.md").write_text(user_md)
     (ws_path / "MEMORY.md").write_text(_generate_memory_md(s4_display, "Intelligence (S4)"))
     all_agents.append(
@@ -727,10 +918,16 @@ def generate_openclaw_package(
     ws_path = workspaces_dir / slug
     ws_path.mkdir()
     s5_model = plan.model_routing.get("s5_preparation", "")
-    soul = generate_s5_soul(identity, hitl)
+    soul = generate_s5_soul(
+        identity, hitl,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+    )
     (ws_path / "SOUL.md").write_text(soul)
     (ws_path / "SKILL.md").write_text(_generate_s5_skill())
-    (ws_path / "HEARTBEAT.md").write_text(_generate_s5_heartbeat())
+    (ws_path / "HEARTBEAT.md").write_text(
+        _generate_s5_heartbeat(operational_modes=operational_modes)
+    )
     (ws_path / "USER.md").write_text(user_md)
     (ws_path / "MEMORY.md").write_text(_generate_memory_md("Policy Guardian", "Identity (S5)"))
     all_agents.append(

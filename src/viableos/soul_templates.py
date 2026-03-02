@@ -9,6 +9,87 @@ def _bullet_list(items: list[str], prefix: str = "- ") -> str:
     return "\n".join(f"{prefix}{item}" for item in items) if items else "- (none defined)"
 
 
+# ── Shared Behavioral Spec Renderers ────────────────────────────────────────
+
+
+def _render_operational_modes(modes: dict[str, Any] | None) -> str:
+    """Render the Operational Modes section (shared by all agents)."""
+    if not modes:
+        return ""
+    normal = modes.get("normal", {})
+    elevated = modes.get("elevated", {})
+    crisis = modes.get("crisis", {})
+
+    elevated_triggers = _bullet_list(elevated.get("triggers", []), "  - ")
+    crisis_triggers = _bullet_list(crisis.get("triggers", []), "  - ")
+
+    return f"""
+## Operational Modes
+- **Normal**: {normal.get('description', 'Tagesbetrieb')}. Autonomie: {normal.get('s1_autonomy', 'full')}. Reporting: {normal.get('reporting_frequency', 'weekly')}.
+- **Erhöhte Aktivität**: {elevated.get('description', 'Erhöhte Wachsamkeit')}. Autonomie: {elevated.get('s1_autonomy', 'standard')}. Reporting: {elevated.get('reporting_frequency', 'daily')}.
+  Trigger:
+{elevated_triggers}
+- **Krise**: {crisis.get('description', 'Akute Krise')}. Autonomie: {crisis.get('s1_autonomy', 'restricted')}. Reporting: {crisis.get('reporting_frequency', 'hourly')}.{' Mensch muss Krise aktivieren.' if crisis.get('human_required') else ''}
+  Trigger:
+{crisis_triggers}
+"""
+
+
+def _render_escalation_protocol(
+    chains: dict[str, Any] | None,
+    agent_role: str,
+) -> str:
+    """Render the Escalation Protocol section for a specific agent role."""
+    if not chains:
+        return ""
+
+    # Choose the primary chain based on agent role
+    role_to_chain = {
+        "s1": "operational",
+        "s2": "operational",
+        "s3": "operational",
+        "s3star": "quality",
+        "s4": "strategic",
+        "s5": "strategic",
+    }
+    primary_key = role_to_chain.get(agent_role, "operational")
+    primary = chains.get(primary_key, {})
+    algedonic = chains.get("algedonic", {})
+
+    path = " → ".join(primary.get("path", []))
+    timeout = primary.get("timeout_per_step", "?")
+
+    algedonic_path = " → ".join(algedonic.get("path", []))
+    algedonic_triggers = _bullet_list(algedonic.get("triggers", []), "  - ")
+
+    return f"""
+## Escalation Protocol
+Deine Eskalationskette: {path}
+Timeout pro Stufe: {timeout}
+
+Bei algedonischem Signal (fundamentales Problem):
+Direkt an {algedonic_path}.
+Auslöser:
+{algedonic_triggers}
+"""
+
+
+def _render_vollzug_protocol(vollzug: dict[str, Any] | None) -> str:
+    """Render the Vollzug Protocol section (for S1 agents)."""
+    if not vollzug or not vollzug.get("enabled"):
+        return ""
+    return f"""
+## Vollzug-Pflicht
+Auf jeden Auftrag antwortest du mit einer **Quittung** innerhalb von {vollzug.get('timeout_quittung', '30min')}.
+Nach Erledigung sendest du eine **Vollzugsmeldung**.
+Ohne Vollzugsmeldung gilt der Auftrag als NICHT erledigt.
+Bei Timeout ({vollzug.get('timeout_vollzug', '48h')} ohne Vollzug): {vollzug.get('on_timeout', 'escalate')}.
+"""
+
+
+# ── S1 Soul ─────────────────────────────────────────────────────────────────
+
+
 def generate_s1_soul(
     unit: dict[str, Any],
     identity: dict[str, Any],
@@ -18,6 +99,9 @@ def generate_s1_soul(
     *,
     dependencies: list[dict[str, Any]] | None = None,
     domain_flow: dict[str, Any] | None = None,
+    operational_modes: dict[str, Any] | None = None,
+    escalation_chains: dict[str, Any] | None = None,
+    vollzug_protocol: dict[str, Any] | None = None,
 ) -> str:
     name = unit.get("name", "Unnamed Unit")
     purpose = unit.get("purpose", "")
@@ -29,6 +113,7 @@ def generate_s1_soul(
     approval = hitl.get("approval_required", [])
     sub_units = unit.get("sub_units", [])
     domain_context = unit.get("domain_context", "")
+    autonomy_levels = unit.get("autonomy_levels")
 
     relevant_rules = [
         r for r in coordination_rules
@@ -93,6 +178,32 @@ The central object is **{obj}**: {flow}
 {chr(10).join(dep_lines)}
 """
 
+    # ── Autonomy Matrix (structured, replaces free-text) ──
+    autonomy_section = ""
+    if autonomy_levels:
+        can_do = _bullet_list(autonomy_levels.get("can_do_alone", []))
+        needs_coord = _bullet_list(autonomy_levels.get("needs_coordination", []))
+        needs_appr = _bullet_list(autonomy_levels.get("needs_approval", []))
+        autonomy_section = f"""
+## Autonomy Matrix
+### Allein entscheiden
+{can_do}
+### Koordination nötig (über S2)
+{needs_coord}
+### Genehmigung nötig (Mensch)
+{needs_appr}
+"""
+    else:
+        autonomy_section = f"""
+## What you can do alone
+{autonomy}
+"""
+
+    # ── Behavioral Specs ──
+    modes_section = _render_operational_modes(operational_modes)
+    escalation_section = _render_escalation_protocol(escalation_chains, "s1")
+    vollzug_section = _render_vollzug_protocol(vollzug_protocol)
+
     return f"""# {name}
 
 ## Identity refresh
@@ -105,10 +216,7 @@ Your purpose: {purpose}
 {sub_units_section}{domain_section}{flow_section}{dep_section}
 ## Values (always follow these)
 {_bullet_list(values)}
-{never_do_section}
-## What you can do alone
-{autonomy}
-
+{never_do_section}{autonomy_section}
 ## What needs human approval
 {_bullet_list(approval)}
 
@@ -120,7 +228,7 @@ Your purpose: {purpose}
 
 ## Other units in this system
 {_bullet_list(other_units)}
-
+{modes_section}{escalation_section}{vollzug_section}
 ## Boundaries
 - You work ONLY in your workspace directory — never touch other agents' files
 - You NEVER contact other units directly — the Coordinator handles that
@@ -149,6 +257,9 @@ Deliver results, not options.
 """
 
 
+# ── S2 Soul ─────────────────────────────────────────────────────────────────
+
+
 def generate_s2_soul(
     coordination_rules: list[dict[str, Any]],
     s1_units: list[str],
@@ -157,6 +268,10 @@ def generate_s2_soul(
     shared_resources: list[str] | None = None,
     domain_flow: dict[str, Any] | None = None,
     label: str = "",
+    operational_modes: dict[str, Any] | None = None,
+    escalation_chains: dict[str, Any] | None = None,
+    conflict_detection: dict[str, Any] | None = None,
+    transduction_mappings: list[dict[str, Any]] | None = None,
 ) -> str:
     display_name = label or "Coordinator"
     sys_purpose = identity.get("purpose", "")
@@ -191,6 +306,38 @@ The central object **{obj}** flows: {flow}
 You coordinate handoffs between units along this flow.
 """
 
+    # ── Behavioral Specs: Conflict Detection ──
+    conflict_section = ""
+    if conflict_detection:
+        checks = []
+        if conflict_detection.get("resource_overlaps"):
+            checks.append("- Ressourcen-Überlappung zwischen Einheiten erkennen")
+        if conflict_detection.get("deadline_conflicts"):
+            checks.append("- Terminkonflikte erkennen")
+        if conflict_detection.get("output_contradictions"):
+            checks.append("- Widersprüchliche Outputs erkennen")
+        for trigger in conflict_detection.get("custom_triggers", []):
+            checks.append(f"- {trigger}")
+        if checks:
+            conflict_section = f"""
+## Conflict Detection (automatisch prüfen)
+{chr(10).join(checks)}
+"""
+
+    # ── Behavioral Specs: Transduction ──
+    transduction_section = ""
+    if transduction_mappings:
+        lines = []
+        for m in transduction_mappings:
+            lines.append(f"- **{m['from_unit']}** → **{m['to_unit']}**: {m['translation']}")
+        transduction_section = f"""
+## Fachsprachen-Übersetzung (Transduktion)
+{chr(10).join(lines)}
+"""
+
+    modes_section = _render_operational_modes(operational_modes)
+    escalation_section = _render_escalation_protocol(escalation_chains, "s2")
+
     return f"""# {display_name}
 
 ## Identity refresh
@@ -210,7 +357,7 @@ You are a RULE-BASED ENGINE, not a discussion partner.
 
 ## Coordination rules (ENFORCE THESE)
 {rules_text}
-{shared_section}{flow_section}
+{shared_section}{flow_section}{conflict_section}{transduction_section}
 ## Workspace isolation (CRITICAL)
 Each unit has its own workspace directory. You ENFORCE this:
 - Units NEVER access each other's files directly
@@ -226,7 +373,7 @@ Each unit has its own workspace directory. You ENFORCE this:
 - If two units have conflicting plans: mediate, don't decide.
   If mediation fails → escalate to the Optimizer
 - Monitor for looping: if a unit repeats itself 3+ times, intervene
-
+{modes_section}{escalation_section}
 ## Anti-echoing protocol
 When communicating with units:
 - Always re-state YOUR role before responding
@@ -246,6 +393,9 @@ Friendly and factual. Connecting. Never authoritative.
 """
 
 
+# ── S3 Soul ─────────────────────────────────────────────────────────────────
+
+
 def generate_s3_soul(
     identity: dict[str, Any],
     s1_units: list[str],
@@ -256,6 +406,11 @@ def generate_s3_soul(
     kpi_list: list[str] | None = None,
     success_criteria: list[dict[str, Any]] | None = None,
     label: str = "",
+    operational_modes: dict[str, Any] | None = None,
+    escalation_chains: dict[str, Any] | None = None,
+    triple_index: dict[str, Any] | None = None,
+    deviation_logic: dict[str, Any] | None = None,
+    intervention_authority: dict[str, Any] | None = None,
 ) -> str:
     display_name = label or "Optimizer"
     sys_purpose = identity.get("purpose", "")
@@ -275,6 +430,47 @@ def generate_s3_soul(
 {chr(10).join(lines)}
 Your reporting must cover progress against these criteria.
 """
+
+    # ── Behavioral Specs: Triple Index ──
+    triple_section = ""
+    if triple_index:
+        triple_section = f"""
+## Triple Index (Beer)
+Für jede Einheit misst du:
+- **Actuality**: {triple_index.get('actuality', '?')} — was leistet sie jetzt?
+- **Capability**: {triple_index.get('capability', '?')} — was könnte sie bei Vollauslastung?
+- **Potentiality**: {triple_index.get('potentiality', '?')} — was wäre mit Investition möglich?
+Maßeinheit: {triple_index.get('measurement', '?')}
+"""
+
+    # ── Behavioral Specs: Deviation Logic ──
+    deviation_section = ""
+    if deviation_logic:
+        threshold = deviation_logic.get("threshold_percent", 15)
+        trend = deviation_logic.get("trend_detection", False)
+        deviation_section = f"""
+## Abweichungs-Logik
+Melde NUR Abweichungen > {threshold}%. "Alles normal" ist KEIN Report.
+{"Bei 3x hintereinander leichtem Rückgang: Trend melden, auch wenn Einzelwert unter Schwelle." if trend else ""}
+"""
+
+    # ── Behavioral Specs: Intervention Authority ──
+    intervention_section = ""
+    if intervention_authority:
+        actions = _bullet_list(intervention_authority.get("allowed_actions", []))
+        max_dur = intervention_authority.get("max_duration", "48h")
+        needs_human = intervention_authority.get("requires_human_approval", False)
+        intervention_section = f"""
+## Interventionsrecht (Kanal 3)
+Du DARFST in begründeten Fällen:
+{actions}
+ABER: Jede Intervention muss dokumentiert und begründet werden.
+Maximale Dauer ohne Mensch-Bestätigung: {max_dur}.
+{"Jede Intervention braucht vorab Mensch-Genehmigung." if needs_human else "Du darfst in akuten Fällen sofort handeln — Dokumentation danach."}
+"""
+
+    modes_section = _render_operational_modes(operational_modes)
+    escalation_section = _render_escalation_protocol(escalation_chains, "s3")
 
     return f"""# {display_name}
 
@@ -307,7 +503,7 @@ produces maximum value with available resources.
 - Scout monthly brief is PROTECTED — always use best available model
 - Monitor token waste: agents sending >10k tokens per request need optimization
 - Check for: unbounded session history, redundant tool outputs in context, heartbeat bloat
-
+{triple_section}{deviation_section}{intervention_section}
 ## Behavior
 - Create a weekly digest: status of all units, KPIs, blockers, trends
 - Identify synergies: where can one unit's insight help another?
@@ -316,7 +512,7 @@ produces maximum value with available resources.
 - When units disagree about priorities → YOU decide
 - Escalate to the human ONLY for strategic questions
 - Monitor agent health: looping, excessive token usage, degraded output quality
-
+{modes_section}{escalation_section}
 ## Decision principles
 - Customer value > internal efficiency
 - Shipping > perfection
@@ -329,6 +525,9 @@ Clear. Direct. Numbers-oriented.
 """
 
 
+# ── S3* Soul ────────────────────────────────────────────────────────────────
+
+
 def generate_s3star_soul(
     identity: dict[str, Any],
     checks: list[dict[str, Any]],
@@ -336,13 +535,68 @@ def generate_s3star_soul(
     on_failure: str,
     *,
     label: str = "",
+    operational_modes: dict[str, Any] | None = None,
+    escalation_chains: dict[str, Any] | None = None,
+    provider_constraint: dict[str, Any] | None = None,
+    independence_rules: list[str] | None = None,
+    reporting_target: str | None = None,
 ) -> str:
     display_name = label or "Auditor"
     sys_purpose = identity.get("purpose", "")
-    checks_text = "\n".join(
-        f"- **{c['name']}** — Target: {c['target']}, Method: {c['method']}"
-        for c in checks
-    ) if checks else "- No audit checks defined yet."
+
+    # Render checks including new data_source/comparison fields
+    checks_lines = []
+    for c in checks:
+        line = f"- **{c['name']}** — Target: {c['target']}, Method: {c['method']}"
+        if c.get("data_source"):
+            line += f", Data: {c['data_source']}"
+        if c.get("comparison"):
+            line += f"\n  Vergleich: {c['comparison']}"
+        checks_lines.append(line)
+    checks_text = "\n".join(checks_lines) if checks_lines else "- No audit checks defined yet."
+
+    # ── Provider Constraint (enhanced from hardcoded text) ──
+    provider_section = """
+## CRITICAL: Independence (security-critical)
+You use a DIFFERENT AI provider than the operational units.
+This prevents correlated errors — if a unit hallucinates,
+you won't confirm the same hallucination.
+
+Research shows: in 65% of test scenarios, agents without cross-provider
+audit allowed data exfiltration. You are the security backstop.
+"""
+    if provider_constraint:
+        must_differ = provider_constraint.get("must_differ_from", "s1")
+        reason = provider_constraint.get("reason", "")
+        provider_section = f"""
+## CRITICAL: Independence (security-critical)
+Provider-Constraint: Muss sich von **{must_differ}** unterscheiden.
+Grund: {reason}
+
+Research shows: in 65% of test scenarios, agents without cross-provider
+audit allowed data exfiltration. You are the security backstop.
+"""
+
+    # ── Independence Rules ──
+    independence_section = ""
+    if independence_rules:
+        independence_section = f"""
+## Independence Rules
+{_bullet_list(independence_rules)}
+"""
+
+    # ── Reporting Target ──
+    reporting_section = ""
+    if reporting_target:
+        target_text = "S3 (Optimizer)" if reporting_target == "s3" else "S3 (Optimizer) UND direkt an den Menschen"
+        reporting_section = f"""
+## Reporting Target
+Audit-Ergebnisse gehen an: {target_text}.
+NIEMALS direkt an S1-Units — das würde die Unabhängigkeit kompromittieren.
+"""
+
+    modes_section = _render_operational_modes(operational_modes)
+    escalation_section = _render_escalation_protocol(escalation_chains, "s3star")
 
     return f"""# {display_name}
 
@@ -356,21 +610,13 @@ You trust NOBODY at their word.
 
 ## System purpose
 {sys_purpose}
-
-## CRITICAL: Independence (security-critical)
-You use a DIFFERENT AI provider than the operational units.
-This prevents correlated errors — if a unit hallucinates,
-you won't confirm the same hallucination.
-
-Research shows: in 65% of test scenarios, agents without cross-provider
-audit allowed data exfiltration. You are the security backstop.
-
+{provider_section}
 ## Audit checks
 {checks_text}
 
 ## Units you audit
 {_bullet_list(s1_units)}
-
+{independence_section}{reporting_section}
 ## Security monitoring
 - Check for: unauthorized tool usage, workspace boundary violations
 - Check for: agents passing data to unexpected destinations
@@ -394,7 +640,7 @@ audit allowed data exfiltration. You are the security backstop.
 - Check against defined standards and values
 - Document findings precisely: What, Where, How severe, Recommendation
 - Report findings to the Optimizer (normal) or the human (critical)
-
+{modes_section}{escalation_section}
 ## What you NEVER do
 - Give recommendations to units directly (that's for the Optimizer)
 - Take on operational tasks
@@ -407,17 +653,67 @@ Forensic. Precise. No speculation.
 """
 
 
+# ── S4 Soul ─────────────────────────────────────────────────────────────────
+
+
 def generate_s4_soul(
     identity: dict[str, Any],
     monitoring: dict[str, Any],
     *,
     label: str = "",
+    operational_modes: dict[str, Any] | None = None,
+    escalation_chains: dict[str, Any] | None = None,
+    premises_register: list[dict[str, Any]] | None = None,
+    strategy_bridge: dict[str, Any] | None = None,
+    weak_signals: dict[str, Any] | None = None,
 ) -> str:
     display_name = label or "Scout"
     sys_purpose = identity.get("purpose", "")
     competitors = monitoring.get("competitors", [])
     technology = monitoring.get("technology", [])
     regulation = monitoring.get("regulation", [])
+
+    # ── Behavioral Specs: Premises Register ──
+    premises_section = ""
+    if premises_register:
+        lines = []
+        for p in premises_register:
+            lines.append(
+                f"- **{p['premise']}** — Prüfen: {p.get('check_frequency', '?')}\n"
+                f"  Invalidierungs-Signal: {p.get('invalidation_signal', '?')}\n"
+                f"  Wenn ungültig: {p.get('consequence_if_invalid', '?')}"
+            )
+        premises_section = f"""
+## Prämissen-Register
+Folgende Annahmen musst du kontinuierlich prüfen:
+{chr(10).join(lines)}
+"""
+
+    # ── Behavioral Specs: Strategy Bridge ──
+    bridge_section = ""
+    if strategy_bridge:
+        bridge_section = f"""
+## Strategy Bridge
+Deine Erkenntnisse fließen ein: {strategy_bridge.get('injection_point', '?')}
+Format: {strategy_bridge.get('format', '?')}
+Empfänger: {strategy_bridge.get('recipient', '?')}
+"""
+
+    # ── Behavioral Specs: Weak Signals ──
+    weak_section = ""
+    if weak_signals and weak_signals.get("enabled"):
+        sources = weak_signals.get("sources", [])
+        method = weak_signals.get("detection_method", "")
+        weak_section = """
+## Schwache Signale
+"""
+        if sources:
+            weak_section += f"Quellen: {_bullet_list(sources)}\n"
+        if method:
+            weak_section += f"Erkennungsmethode: {method}\n"
+
+    modes_section = _render_operational_modes(operational_modes)
+    escalation_section = _render_escalation_protocol(escalation_chains, "s4")
 
     return f"""# {display_name}
 
@@ -441,7 +737,7 @@ Your purpose: ensure the system adapts to a changing environment.
 
 ### Regulation
 {_bullet_list(regulation)}
-
+{premises_section}{bridge_section}{weak_section}
 ## Outside-In behavior
 - Monitor systematically: competitors, technology, regulation, market
 - Distinguish signal from noise — not every trend is relevant
@@ -460,19 +756,33 @@ Always include:
 2. What options arise from that?
 3. What do you recommend — and why?
 4. What does the Optimizer say — and where's the tension?
-
+{modes_section}{escalation_section}
 ## Communication style
 Analytical yet visionary. Backed by sources.
 Bold in assessment, humble in recommendation.
 """
 
 
-def generate_s5_soul(identity: dict[str, Any], hitl: dict[str, Any]) -> str:
+# ── S5 Soul ─────────────────────────────────────────────────────────────────
+
+
+def generate_s5_soul(
+    identity: dict[str, Any],
+    hitl: dict[str, Any],
+    *,
+    operational_modes: dict[str, Any] | None = None,
+    escalation_chains: dict[str, Any] | None = None,
+) -> str:
     purpose = identity.get("purpose", "")
     values = identity.get("values", [])
     never_do = identity.get("never_do", [])
     approval = hitl.get("approval_required", [])
     emergency = hitl.get("emergency_alerts", [])
+
+    # ── S5 Behavioral Specs from identity ──
+    balance_monitoring = identity.get("balance_monitoring")
+    algedonic_channel = identity.get("algedonic_channel")
+    basta_constraint = identity.get("basta_constraint")
 
     never_do_section = ""
     if never_do:
@@ -481,6 +791,43 @@ def generate_s5_soul(identity: dict[str, Any], hitl: dict[str, Any]) -> str:
 These are non-negotiable. No agent may do these things, ever.
 {_bullet_list(never_do)}
 """
+
+    # ── Balance Monitoring ──
+    balance_section = ""
+    if balance_monitoring:
+        balance_section = f"""
+## S3/S4 Balance
+Ziel-Verhältnis: {balance_monitoring.get('s3_vs_s4_target', '60/40')}
+Messung: {balance_monitoring.get('measurement', '?')}
+Alarm wenn: {balance_monitoring.get('alert_if_exceeds', '80/20')}
+"""
+
+    # ── Algedonic Channel ──
+    algedonic_section = ""
+    if algedonic_channel and algedonic_channel.get("enabled"):
+        triggers = _bullet_list(algedonic_channel.get("triggers", []))
+        algedonic_section = f"""
+## Algedonischer Kanal
+Jeder Agent kann bei folgenden Ereignissen ein Signal direkt an dich senden:
+{triggers}
+Dieses Signal umgeht die Hierarchie. Du leitest es SOFORT an den Menschen weiter.
+"""
+
+    # ── Basta Constraint ──
+    basta_section = ""
+    if basta_constraint:
+        examples = _bullet_list(basta_constraint.get("examples", []))
+        basta_section = f"""
+## Basta-Vorbehalt
+{basta_constraint.get('description', 'Normative Entscheide bei Unentscheidbarkeit')}
+Folgende Entscheide triffst du NIEMALS selbst:
+{examples}
+Deine Rolle: Entscheidungsvorlage vorbereiten (Kontext, Optionen, Empfehlung, Dringlichkeit).
+Der Mensch entscheidet. Du setzt um.
+"""
+
+    modes_section = _render_operational_modes(operational_modes)
+    escalation_section = _render_escalation_protocol(escalation_chains, "s5")
 
     return f"""# Policy Guardian
 
@@ -505,7 +852,7 @@ that decisions made are carried out.
 
 ## Emergency alerts (interrupt human immediately)
 {_bullet_list(emergency)}
-
+{balance_section}{algedonic_section}{basta_section}
 ## Behavior
 - Know the identity documents by heart (purpose, values, policies)
 - When any agent plans an action that violates policies → flag it
@@ -519,12 +866,15 @@ that decisions made are carried out.
 - 80% of all decisions are made by units/Coordinator/Optimizer WITHOUT the human
 - 20% need the human: strategy, values, exceptions, escalation
 - Your job: ensure only the RIGHT 20% reach the human
-
+{modes_section}{escalation_section}
 ## Communication style
 Wise. Calm. Principled.
 "As a reminder: our policy X states... The current action conflicts with..."
 Never emotional pressure. Always factual reasoning.
 """
+
+
+# ── AGENTS.md + Org Memory (unchanged) ──────────────────────────────────────
 
 
 def generate_agents_md(all_agents: list[dict[str, str]]) -> str:

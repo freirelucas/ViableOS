@@ -2,7 +2,67 @@ import { StepHeader } from '../ui/StepHeader';
 import { NavButtons } from '../ui/NavButtons';
 import { useConfigStore } from '../../store/useConfigStore';
 import { useViabilityCheck } from '../../hooks/useApiData';
-import { CheckCircle, XCircle, AlertTriangle, Info, Rocket } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Info, Rocket, Shield } from 'lucide-react';
+import type { ViableSystem } from '../../types';
+
+function BehavioralSpecsSummary({ vs }: { vs: ViableSystem }) {
+  const modes = vs.operational_modes;
+  const chains = vs.escalation_chains;
+  const vollzug = vs.vollzug_protocol;
+  const hasSpecs = modes || chains || vollzug;
+
+  if (!hasSpecs) return null;
+
+  return (
+    <div className="mb-6">
+      <h3 className="text-sm font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2 flex items-center gap-2">
+        <Shield className="w-3.5 h-3.5" />
+        Behavioral Specifications
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        {modes && (
+          <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]">
+            <div className="text-xs font-bold text-[var(--color-text)] mb-1">Operational Modes</div>
+            {(['normal', 'elevated', 'crisis'] as const).map((key) => {
+              const mode = modes[key];
+              if (!mode) return null;
+              return (
+                <div key={key} className="text-xs text-[var(--color-muted)]">
+                  <span className="font-medium capitalize">{key}</span>
+                  {' — '}Autonomie: {mode.s1_autonomy}, Reporting: {mode.reporting_frequency}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {chains && (
+          <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]">
+            <div className="text-xs font-bold text-[var(--color-text)] mb-1">Escalation Chains</div>
+            {Object.entries(chains).map(([key, chain]) => (
+              <div key={key} className="text-xs text-[var(--color-muted)]">
+                <span className="font-medium capitalize">{key}</span>
+                {' — '}{chain.path.join(' → ')} ({chain.timeout_per_step})
+              </div>
+            ))}
+          </div>
+        )}
+
+        {vollzug && (
+          <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]">
+            <div className="text-xs font-bold text-[var(--color-text)] mb-1">Vollzug Protocol</div>
+            <div className="text-xs text-[var(--color-muted)]">
+              {vollzug.enabled ? 'Aktiv' : 'Inaktiv'} — Quittung: {vollzug.timeout_quittung}, Vollzug: {vollzug.timeout_vollzug}
+            </div>
+            <div className="text-xs text-[var(--color-muted)]">
+              Bei Timeout: {vollzug.on_timeout}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const SEVERITY_STYLES = {
   critical: { color: 'var(--color-danger)', icon: AlertTriangle, label: 'CRITICAL' },
@@ -64,6 +124,8 @@ export function ReviewStep() {
           </div>
         ))}
       </div>
+
+      <BehavioralSpecsSummary vs={config.viable_system} />
 
       {report.warnings.length > 0 && (
         <div className="space-y-2 mb-6">

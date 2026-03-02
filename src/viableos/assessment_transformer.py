@@ -244,6 +244,338 @@ def _build_hitl(assessment: dict[str, Any]) -> dict[str, Any]:
     return hitl
 
 
+# ── Behavioral Spec Builders ──
+
+
+def _get_team_size(assessment: dict[str, Any]) -> int:
+    """Extract team size from assessment, default 1."""
+    return assessment.get("team", {}).get("size", 1)
+
+
+def _build_operational_modes(assessment: dict[str, Any]) -> dict[str, Any]:
+    """Build operational modes from external_forces + success_criteria + team size."""
+    team_size = _get_team_size(assessment)
+    forces = assessment.get("external_forces", [])
+    criteria = assessment.get("success_criteria", [])
+
+    # Elevated triggers from external forces (risks)
+    elevated_triggers = [f["name"] for f in forces[:3]] if forces else ["Externer Druck erkannt"]
+
+    # Crisis triggers from inverted priority-1 success criteria
+    crisis_triggers = []
+    for c in criteria:
+        prio = c.get("priority", 2)
+        if str(prio) == "1":
+            crisis_triggers.append(f"Scheitern: {c['criterion']}")
+    if not crisis_triggers:
+        crisis_triggers = ["Kritischer Systemausfall"]
+
+    # Reporting frequency proportional to team size
+    if team_size <= 2:
+        normal_freq = "daily"
+        elevated_freq = "twice_daily"
+    elif team_size <= 5:
+        normal_freq = "weekly"
+        elevated_freq = "daily"
+    else:
+        normal_freq = "weekly"
+        elevated_freq = "daily"
+
+    return {
+        "normal": {
+            "description": "Tagesbetrieb, volle Autonomie der Einheiten",
+            "s1_autonomy": "full",
+            "reporting_frequency": normal_freq,
+            "escalation_threshold": "2h" if team_size <= 2 else "4h",
+        },
+        "elevated": {
+            "description": "Erhöhte Wachsamkeit bei externem Druck",
+            "triggers": elevated_triggers,
+            "s1_autonomy": "standard",
+            "reporting_frequency": elevated_freq,
+            "escalation_threshold": "30min" if team_size <= 2 else "1h",
+        },
+        "crisis": {
+            "description": "Akute Krise, zentrale Steuerung",
+            "triggers": crisis_triggers,
+            "s1_autonomy": "restricted",
+            "reporting_frequency": "hourly",
+            "escalation_threshold": "sofort",
+            "human_required": True,
+        },
+    }
+
+
+def _build_escalation_chains(assessment: dict[str, Any]) -> dict[str, Any]:
+    """Build escalation chains with timeouts based on team size."""
+    team_size = _get_team_size(assessment)
+    identity = _build_identity(assessment)
+    never_do = identity.get("never_do", [])
+
+    if team_size <= 2:
+        timeout = "1h"
+    elif team_size <= 5:
+        timeout = "2h"
+    else:
+        timeout = "4h"
+
+    algedonic_triggers = list(never_do) if never_do else []
+    algedonic_triggers.append("Systemische Fehlfunktion")
+
+    return {
+        "operational": {
+            "path": ["s2-coordination", "s3-optimization", "human"],
+            "timeout_per_step": timeout,
+        },
+        "quality": {
+            "path": ["s3-optimization", "human"],
+            "timeout_per_step": timeout,
+        },
+        "strategic": {
+            "path": ["s5-policy", "human"],
+            "timeout_per_step": timeout,
+        },
+        "algedonic": {
+            "path": ["s5-policy", "human"],
+            "timeout_per_step": "15min",
+            "description": "Schmerzsignal bei fundamentalem Problem",
+            "triggers": algedonic_triggers,
+        },
+    }
+
+
+def _build_vollzug_protocol(assessment: dict[str, Any]) -> dict[str, Any]:
+    """Build Vollzug protocol with timeouts based on team size and reporting rhythm."""
+    team_size = _get_team_size(assessment)
+    s3_config = _build_s3_config(assessment)
+    rhythm = s3_config.get("reporting_rhythm", "weekly")
+
+    timeout_quittung = "15min" if team_size <= 2 else "30min"
+
+    rhythm_to_vollzug = {
+        "hourly": "4h",
+        "daily": "12h",
+        "weekly": "48h",
+        "monthly": "1w",
+    }
+    timeout_vollzug = rhythm_to_vollzug.get(rhythm, "48h")
+
+    on_timeout = "alert_human" if team_size <= 2 else "escalate"
+
+    return {
+        "enabled": True,
+        "timeout_quittung": timeout_quittung,
+        "timeout_vollzug": timeout_vollzug,
+        "on_timeout": on_timeout,
+    }
+
+
+def _build_s1_autonomy_levels(
+    unit: dict[str, Any],
+    hitl: dict[str, Any],
+    dependencies: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build structured autonomy levels for an S1 unit."""
+    approval_required = hitl.get("approval_required", [])
+
+    unit_name = unit.get("name", "")
+    tools = unit.get("tools", [])
+    purpose = unit.get("purpose", "")
+
+    can_do_alone = []
+    if purpose:
+        can_do_alone.append(purpose)
+    for tool in tools:
+        can_do_alone.append(f"Nutzung von {tool}")
+
+    needs_coordination = []
+    for dep in dependencies:
+        if dep.get("from") == unit_name or dep.get("to") == unit_name:
+            needs_coordination.append(dep.get("description", "Abstimmung mit anderer Unit"))
+
+    return {
+        "can_do_alone": can_do_alone,
+        "needs_coordination": needs_coordination if needs_coordination else ["Ressourcenteilung mit anderen Units"],
+        "needs_approval": list(approval_required),
+    }
+
+
+def _build_conflict_detection(
+    dependencies: list[dict[str, Any]],
+    shared_resources: list[str],
+    s1_count: int,
+) -> dict[str, Any]:
+    """Build S2 conflict detection from dependencies and shared resources."""
+    custom_triggers = []
+    for dep in dependencies:
+        desc = dep.get("description", "")
+        if desc:
+            custom_triggers.append(f"Konfliktpotential: {desc}")
+
+    return {
+        "resource_overlaps": len(shared_resources) > 0,
+        "deadline_conflicts": True,
+        "output_contradictions": s1_count > 1,
+        "custom_triggers": custom_triggers if custom_triggers else None,
+    }
+
+
+def _build_transduction_mappings(
+    dependencies: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Build S2 transduction mappings from dependencies."""
+    mappings = []
+    for dep in dependencies:
+        from_unit = dep.get("from", "")
+        to_unit = dep.get("to", "")
+        desc = dep.get("description", "")
+        if from_unit and to_unit:
+            mappings.append({
+                "from_unit": from_unit,
+                "to_unit": to_unit,
+                "translation": f"Was {from_unit} als '{desc}' liefert, ist für {to_unit} ein Input",
+            })
+    return mappings
+
+
+def _build_triple_index(
+    s3_config: dict[str, Any],
+    success_criteria: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build S3 triple index from KPIs and success criteria."""
+    kpis = s3_config.get("kpi_list", [])
+    measurement = "; ".join(kpis[:3]) if kpis else "Output-Menge, Qualität, Durchlaufzeit"
+
+    criteria_texts = [c.get("criterion", "") for c in success_criteria[:2]]
+    criteria_hint = "; ".join(criteria_texts) if criteria_texts else "Kernleistung"
+
+    return {
+        "actuality": f"Aktuelle Leistung gemessen an: {criteria_hint}",
+        "capability": "Maximalleistung bei optimaler Auslastung aller Einheiten",
+        "potentiality": "Erreichbare Leistung bei gezielter Investition in Engpässe",
+        "measurement": measurement,
+    }
+
+
+def _build_deviation_logic(budget_strategy: str) -> dict[str, Any]:
+    """Build S3 deviation logic based on budget strategy."""
+    threshold_map = {
+        "frugal": 10,
+        "balanced": 15,
+        "performance": 20,
+    }
+    return {
+        "report_only_deviations": True,
+        "threshold_percent": threshold_map.get(budget_strategy, 15),
+        "trend_detection": True,
+    }
+
+
+def _build_intervention_authority(assessment: dict[str, Any]) -> dict[str, Any]:
+    """Build S3 intervention authority based on team size."""
+    team_size = _get_team_size(assessment)
+    return {
+        "can_restrict_s1": True,
+        "requires_documentation": True,
+        "requires_human_approval": team_size <= 2,
+        "max_duration": "48h",
+        "allowed_actions": [
+            "Budget einfrieren",
+            "Aufgabe umleiten",
+            "Modell downgraden",
+        ],
+    }
+
+
+def _build_s3star_extensions() -> dict[str, Any]:
+    """Build S3* behavioral extensions (always the same — VSM principle)."""
+    return {
+        "provider_constraint": {
+            "must_differ_from": "s1",
+            "reason": "Verhindert korrelierte Halluzinationen",
+        },
+        "reporting_target": "s3",
+        "independence_rules": [
+            "Kein Schreibzugriff auf S1-Workspaces",
+            "Kein Zugang zu S1-Prompts",
+            "Eigene Datenquellen für Verifikation",
+        ],
+    }
+
+
+def _build_premises_register(
+    external_forces: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Build S4 premises register from external forces."""
+    type_to_frequency = {
+        "regulation": "monthly",
+        "technology": "weekly",
+        "competitors": "monthly",
+    }
+    premises = []
+    for force in external_forces:
+        force_type = _classify_external_force(force)
+        freq = type_to_frequency.get(force_type, "monthly")
+        name = force.get("name", "Unbekannte Kraft")
+        premises.append({
+            "premise": f"Annahme bezüglich: {name}",
+            "check_frequency": freq,
+            "invalidation_signal": f"Signifikante Änderung bei: {name}",
+            "consequence_if_invalid": f"Strategie bezüglich {name} muss überprüft werden",
+        })
+    return premises
+
+
+def _build_strategy_bridge(s3_config: dict[str, Any]) -> dict[str, Any]:
+    """Build S4 strategy bridge tied to S3 reporting rhythm."""
+    rhythm = s3_config.get("reporting_rhythm", "weekly")
+    return {
+        "injection_point": f"Vor dem {rhythm}-Reporting",
+        "format": "Strategisches Briefing mit max. 3 Handlungsempfehlungen",
+        "recipient": "s3-optimization",
+    }
+
+
+def _build_identity_extensions(
+    identity: dict[str, Any],
+    budget_strategy: str,
+) -> dict[str, Any]:
+    """Build S5/identity behavioral extensions."""
+    balance_map = {
+        "frugal": ("70/30", "85/15"),
+        "balanced": ("60/40", "80/20"),
+        "performance": ("50/50", "75/25"),
+    }
+    target, alert = balance_map.get(budget_strategy, ("60/40", "80/20"))
+
+    never_do = identity.get("never_do", [])
+    algedonic_triggers = list(never_do) if never_do else []
+    algedonic_triggers.append("Systemische Fehlfunktion")
+
+    return {
+        "balance_monitoring": {
+            "s3_vs_s4_target": target,
+            "measurement": "Anteil der Agent-Tokens die in S3 vs S4 fließen",
+            "alert_if_exceeds": alert,
+        },
+        "algedonic_channel": {
+            "enabled": True,
+            "who_can_send": "all_agents",
+            "triggers": algedonic_triggers,
+            "bypasses_hierarchy": True,
+        },
+        "basta_constraint": {
+            "description": "Normative Entscheide bei Unentscheidbarkeit",
+            "examples": [
+                "Strategiewechsel",
+                "Fusion/Übernahme",
+                "Ethik-Dilemma",
+            ],
+            "agent_role": "prepare_only",
+        },
+    }
+
+
 def transform_assessment(assessment: dict[str, Any]) -> dict[str, Any]:
     """Convert an assessment_config.json dict into a viable_system config.
 
@@ -262,13 +594,74 @@ def transform_assessment(assessment: dict[str, Any]) -> dict[str, Any]:
 
     success_criteria = assessment.get("success_criteria", [])
     shared_resources = assessment.get("shared_resources", [])
+    external_forces = assessment.get("external_forces", [])
+    budget_strategy = "balanced"
+
+    # ── Behavioral Specs ──
+
+    # Top-level
+    operational_modes = _build_operational_modes(assessment)
+    escalation_chains = _build_escalation_chains(assessment)
+    vollzug_protocol = _build_vollzug_protocol(assessment)
+
+    # S1: autonomy levels per unit
+    for unit in s1_units:
+        unit["autonomy_levels"] = _build_s1_autonomy_levels(
+            unit, hitl, dependencies,
+        )
+
+    # S2: conflict detection + transduction
+    s1_count = len(s1_units)
+    conflict_detection = _build_conflict_detection(dependencies, shared_resources, s1_count)
+    transduction_mappings = _build_transduction_mappings(dependencies)
+
+    # S3: triple index, deviation logic, intervention authority
+    triple_index = _build_triple_index(s3_config, success_criteria)
+    deviation_logic = _build_deviation_logic(budget_strategy)
+    intervention_authority = _build_intervention_authority(assessment)
+
+    # S3*: extensions
+    s3star_ext = _build_s3star_extensions()
+
+    # S4: premises register + strategy bridge
+    premises_register = _build_premises_register(external_forces)
+    strategy_bridge = _build_strategy_bridge(s3_config)
+
+    # S5/Identity: extensions
+    identity_ext = _build_identity_extensions(identity, budget_strategy)
+
+    # ── Merge behavioral specs into existing configs ──
+
+    # S2
+    s2_config: dict[str, Any] = {"coordination_rules": coord_rules}
+    s2_config["conflict_detection"] = conflict_detection
+    if conflict_detection.get("custom_triggers") is None:
+        del s2_config["conflict_detection"]["custom_triggers"]
+    if transduction_mappings:
+        s2_config["transduction_mappings"] = transduction_mappings
+
+    # S3
+    s3_config["triple_index"] = triple_index
+    s3_config["deviation_logic"] = deviation_logic
+    s3_config["intervention_authority"] = intervention_authority
+
+    # S3*
+    s3star_config.update(s3star_ext)
+
+    # S4
+    s4_config["premises_register"] = premises_register
+    s4_config["strategy_bridge"] = strategy_bridge
+    s4_config["weak_signals"] = {"enabled": True}
+
+    # Identity
+    identity.update(identity_ext)
 
     config: dict[str, Any] = {
         "viable_system": {
             "name": assessment.get("system_name", "Unnamed System"),
             "identity": identity,
             "system_1": s1_units,
-            "system_2": {"coordination_rules": coord_rules},
+            "system_2": s2_config,
             "system_3": s3_config,
             "system_3_star": s3star_config,
             "system_4": s4_config,
@@ -279,6 +672,9 @@ def transform_assessment(assessment: dict[str, Any]) -> dict[str, Any]:
             },
             "success_criteria": success_criteria,
             "shared_resources": shared_resources,
+            "operational_modes": operational_modes,
+            "escalation_chains": escalation_chains,
+            "vollzug_protocol": vollzug_protocol,
         },
     }
 

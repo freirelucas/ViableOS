@@ -409,6 +409,119 @@ def _check_sub_recursion(vs: dict[str, Any]) -> list[Warning]:
     return warnings
 
 
+# ── Behavioral spec warnings ──────────────────────────────────────────────
+
+
+def _check_behavioral_specs(vs: dict[str, Any]) -> list[Warning]:
+    """Check completeness of behavioral specifications (Phase 1 fields).
+
+    These are optional but improve agent governance significantly.
+    Only emitted when assessment data suggests they should be present
+    (i.e. when the config was generated via the transformer).
+    """
+    warnings: list[Warning] = []
+
+    # Only check if config looks like it came from the transformer
+    has_assessment_origin = bool(
+        vs.get("operational_modes")
+        or vs.get("escalation_chains")
+        or vs.get("vollzug_protocol")
+        or any(u.get("autonomy_levels") for u in vs.get("system_1", []))
+    )
+    if not has_assessment_origin:
+        return warnings
+
+    # ── Operational Modes ──
+    modes = vs.get("operational_modes", {})
+    if not modes:
+        warnings.append(Warning(
+            category="Behavioral Specs",
+            severity="warning",
+            message="No operational modes defined. Agents won't know how to behave differently under stress.",
+            suggestion="Define normal/elevated/crisis modes with triggers and autonomy levels.",
+        ))
+    elif not modes.get("crisis", {}).get("triggers"):
+        warnings.append(Warning(
+            category="Behavioral Specs",
+            severity="info",
+            message="Crisis mode has no triggers. Agents won't know when to activate crisis behavior.",
+            suggestion="Add crisis triggers derived from your critical success criteria.",
+        ))
+
+    # ── Escalation Chains ──
+    chains = vs.get("escalation_chains", {})
+    if not chains:
+        warnings.append(Warning(
+            category="Behavioral Specs",
+            severity="warning",
+            message="No escalation chains defined. Issues will have no clear escalation path.",
+            suggestion="Define operational, quality, strategic, and algedonic escalation paths.",
+        ))
+    elif not chains.get("algedonic"):
+        warnings.append(Warning(
+            category="Behavioral Specs",
+            severity="warning",
+            message="No algedonic escalation path. Critical failures won't bypass the hierarchy.",
+            suggestion="Add an algedonic channel that goes directly to S5/human.",
+        ))
+
+    # ── Vollzug Protocol ──
+    vollzug = vs.get("vollzug_protocol", {})
+    if not vollzug or not vollzug.get("enabled"):
+        warnings.append(Warning(
+            category="Behavioral Specs",
+            severity="info",
+            message="Vollzug protocol not active. Directives won't be tracked to completion.",
+            suggestion="Enable the vollzug protocol to ensure agents acknowledge and execute directives.",
+        ))
+
+    # ── S1 Autonomy Levels ──
+    units = vs.get("system_1", [])
+    units_without_autonomy = [
+        u.get("name", "?") for u in units if not u.get("autonomy_levels")
+    ]
+    if units_without_autonomy:
+        names = ", ".join(units_without_autonomy)
+        warnings.append(Warning(
+            category="Behavioral Specs",
+            severity="info",
+            message=f"S1 units without autonomy levels: {names}. Agents won't know what they can decide alone.",
+            suggestion="Define can_do_alone / needs_coordination / needs_approval for each unit.",
+        ))
+
+    # ── S3* Provider Constraint ──
+    s3star = vs.get("system_3_star", {})
+    if s3star.get("checks") and not s3star.get("provider_constraint"):
+        warnings.append(Warning(
+            category="Behavioral Specs",
+            severity="warning",
+            message="S3* Audit has no provider constraint. Auditor and auditee may share correlated hallucinations.",
+            suggestion="Set provider_constraint.must_differ_from = 's1' to ensure independent verification.",
+        ))
+
+    # ── Algedonic Channel ──
+    algedonic = vs.get("identity", {}).get("algedonic_channel", {})
+    if not algedonic.get("enabled"):
+        warnings.append(Warning(
+            category="Behavioral Specs",
+            severity="info",
+            message="Algedonic channel not enabled. Critical pain/pleasure signals can't bypass the hierarchy.",
+            suggestion="Enable the algedonic channel so any agent can signal existential issues directly to S5.",
+        ))
+
+    # ── S4 Premises Register ──
+    s4 = vs.get("system_4", {})
+    if s4.get("monitoring") and not s4.get("premises_register"):
+        warnings.append(Warning(
+            category="Behavioral Specs",
+            severity="info",
+            message="S4 monitors the environment but has no premises register. Strategic assumptions aren't tracked.",
+            suggestion="Add a premises register to track which assumptions could invalidate your strategy.",
+        ))
+
+    return warnings
+
+
 def check_viability(config: dict[str, Any]) -> ViabilityReport:
     """Run all six VSM checks plus community-driven warnings."""
     vs = config.get("viable_system", {})
@@ -432,5 +545,6 @@ def check_viability(config: dict[str, Any]) -> ViabilityReport:
     warnings.extend(_check_dependencies(vs))
     warnings.extend(_check_success_criteria(vs))
     warnings.extend(_check_sub_recursion(vs))
+    warnings.extend(_check_behavioral_specs(vs))
 
     return ViabilityReport(score=score, total=6, checks=checks, warnings=warnings)
