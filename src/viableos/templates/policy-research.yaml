@@ -1,0 +1,133 @@
+viable_system:
+  name: "DIEST Policy Research"
+  runtime: "openclaw"
+
+  budget:
+    monthly_usd: 300
+    strategy: "balanced"
+
+  identity:
+    purpose: "Produce rigorous policy research on Digital Transformation of the State, Institutions, and Democracy to inform public policy decisions"
+    values:
+      - "Scientific rigor and methodological transparency"
+      - "Public interest above institutional interest"
+      - "Evidence-based policy recommendations"
+      - "Open access and knowledge democratization"
+    never_do:
+      - "Publish unverified data or unreviewed conclusions"
+      - "Make partisan political recommendations"
+      - "Use confidential government data without authorization"
+    decisions_requiring_human:
+      - "Final publication approval for Discussion Texts (TDs) and Technical Notes"
+      - "Research agenda priorities and resource allocation"
+      - "Institutional partnerships and data sharing agreements"
+      - "Methodological framework changes"
+
+  system_1:
+    - name: "Monitoring & Analysis"
+      purpose: "Monitor legislation, decrees, government programs, PPA, and digital government policies. Produce automated analyses and briefings for researchers"
+      autonomy: "Can monitor and draft summaries independently. Alerts and trend analyses need researcher review."
+      tools: [web-scraping, rss-monitoring, text-summarization, alert-system, data-analysis]
+      weight: 7
+
+    - name: "Bibliographic Research"
+      purpose: "Conduct systematic literature reviews, map theoretical frameworks (neo-institutionalism, digital governance, public administration), and maintain a knowledge base of relevant academic work"
+      autonomy: "Can search, catalog, and summarize independently. Framework synthesis and theoretical positioning need researcher guidance."
+      tools: [academic-search, pdf-extraction, citation-management, text-summarization, knowledge-base]
+      weight: 6
+
+    - name: "Text Production"
+      purpose: "Assist in producing Discussion Texts (TDs), Technical Notes, policy briefs, and research reports with proper academic structure and IPEA standards"
+      autonomy: "Can draft sections and format documents independently. Final content, conclusions, and policy recommendations need researcher approval."
+      tools: [writing, editing, formatting, citation-formatting, translation]
+      weight: 8
+
+    - name: "Data & Evidence"
+      purpose: "Collect, process, and analyze quantitative and qualitative data from government portals, IBGE, international organizations (OECD, World Bank, UN), and open data sources"
+      autonomy: "Can collect and clean data independently. Statistical analyses and data interpretations need researcher validation."
+      tools: [data-collection, data-cleaning, statistical-analysis, visualization, api-integration]
+      weight: 5
+
+  system_2:
+    coordination_rules:
+      - trigger: "Monitoring detects a new relevant legislation or policy change"
+        action: "Alert Bibliographic Research to check for related academic literature and Data & Evidence for impact data"
+      - trigger: "Bibliographic Research completes a literature review"
+        action: "Notify Text Production with structured findings and Monitoring with new keywords to track"
+      - trigger: "Text Production begins a new TD or Technical Note"
+        action: "Request relevant briefings from Monitoring, literature summaries from Bibliographic Research, and data from Data & Evidence"
+      - trigger: "Data & Evidence identifies a significant trend or anomaly"
+        action: "Alert Monitoring for context and Text Production for potential inclusion in ongoing work"
+      - trigger: "Researcher defines a new research topic"
+        action: "Notify all units to begin parallel collection in their respective domains"
+
+  system_3:
+    reporting_rhythm: "weekly"
+    resource_allocation: "Monitoring: 25%, Bibliographic Research: 25%, Text Production: 30%, Data & Evidence: 20%"
+    kpi_list:
+      - "Monitoring alerts generated vs. relevant (precision)"
+      - "Literature reviews completed per research cycle"
+      - "Draft sections produced per week"
+      - "Data sources integrated and up-to-date"
+      - "Average time from research question to first draft"
+
+  system_3_star:
+    schedule: "bi-weekly"
+    checks:
+      - name: "Source Verification"
+        target: "Monitoring & Analysis"
+        method: "Cross-reference 3 recent briefings against original sources for accuracy and completeness"
+      - name: "Literature Quality"
+        target: "Bibliographic Research"
+        method: "Verify citation accuracy and relevance scoring for last 5 cataloged papers"
+      - name: "Academic Standards"
+        target: "Text Production"
+        method: "Review last draft section against IPEA publication guidelines and methodological rigor"
+      - name: "Data Integrity"
+        target: "Data & Evidence"
+        method: "Validate data pipeline outputs against original sources for 3 recent datasets"
+    on_failure: "Flag for researcher review with detailed discrepancy report"
+
+  system_4:
+    monitoring:
+      competitors: ["Other policy research institutes (FGV, Insper, CEBRAP)", "International research organizations (Brookings, OECD)"]
+      technology: ["New AI research tools", "Open data platforms", "NLP advances for policy analysis", "Large language model capabilities"]
+      regulation: ["Research ethics regulations", "Open access mandates", "Data protection (LGPD)", "Government transparency laws (LAI)"]
+
+  human_in_the_loop:
+    notification_channel: "email"
+    approval_required:
+      - "publication_of_td_or_technical_note"
+      - "research_agenda_changes"
+      - "institutional_data_sharing"
+      - "policy_recommendations"
+    review_required:
+      - "literature_review_synthesis"
+      - "data_analysis_interpretations"
+      - "draft_sections_with_conclusions"
+      - "trend_analysis_reports"
+    emergency_alerts:
+      - "critical_legislation_change"
+      - "data_source_unavailable"
+      - "factual_error_detected_in_published_work"
+
+  shared_resources:
+    - "IPEA institutional knowledge base"
+    - "Academic paper database"
+    - "Government open data portal access"
+    - "Citation management system"
+
+  domain_flow:
+    central_object: "Research output (TDs, Technical Notes, Policy Briefs)"
+    flow_description: "Research questions flow from agenda setting through monitoring, literature review, and data collection, converging in text production for final output"
+    feedback_loop: "Published outputs generate new monitoring keywords, reveal literature gaps, and inform future research priorities"
+
+  success_criteria:
+    - criterion: "Research outputs are methodologically sound and pass peer review"
+      priority: "1"
+    - criterion: "Policy monitoring is timely — relevant changes detected within 48h"
+      priority: "2"
+    - criterion: "Literature reviews are comprehensive and up-to-date"
+      priority: "3"
+    - criterion: "Data analyses are reproducible and well-documented"
+      priority: "3"

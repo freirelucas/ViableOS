@@ -112,6 +112,12 @@ TEMPLATE_INFO: dict[str, dict[str, Any]] = {
         "description": "Kitchen, Front-of-House, Marketing & Reservations",
         "units": 3,
     },
+    "policy-research": {
+        "name": "Policy Research",
+        "tagline": "Monitor, analyze, and publish policy research",
+        "description": "Monitoring & Analysis, Bibliographic Research, Text Production, Data & Evidence",
+        "units": 4,
+    },
 }
 
 VALUE_PRESETS = [
