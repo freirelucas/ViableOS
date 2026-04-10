@@ -29,7 +29,7 @@ function BehavioralSpecsSummary({ vs }: { vs: ViableSystem }) {
               return (
                 <div key={key} className="text-xs text-[var(--color-muted)]">
                   <span className="font-medium capitalize">{key}</span>
-                  {' — '}Autonomie: {mode.s1_autonomy}, Reporting: {mode.reporting_frequency}
+                  {' — '}Autonomy: {mode.s1_autonomy}, Reporting: {mode.reporting_frequency}
                 </div>
               );
             })}
@@ -52,10 +52,10 @@ function BehavioralSpecsSummary({ vs }: { vs: ViableSystem }) {
           <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]">
             <div className="text-xs font-bold text-[var(--color-text)] mb-1">Vollzug Protocol</div>
             <div className="text-xs text-[var(--color-muted)]">
-              {vollzug.enabled ? 'Aktiv' : 'Inaktiv'} — Quittung: {vollzug.timeout_quittung}, Vollzug: {vollzug.timeout_vollzug}
+              {vollzug.enabled ? 'Active' : 'Inactive'} — Acknowledgment: {vollzug.timeout_quittung}, Execution: {vollzug.timeout_vollzug}
             </div>
             <div className="text-xs text-[var(--color-muted)]">
-              Bei Timeout: {vollzug.on_timeout}
+              On Timeout: {vollzug.on_timeout}
             </div>
           </div>
         )}

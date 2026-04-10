@@ -1,8 +1,8 @@
 import { test, expect, type ConsoleMessage } from '@playwright/test';
 
 /**
- * Browser-Konsolen-Überwachung für ViableOS
- * Fängt alle Errors, Warnings und Failed Requests ab
+ * Browser console monitoring for ViableOS
+ * Catches all errors, warnings, and failed requests
  */
 
 async function collectConsoleMessages(page: any, url: string) {
@@ -22,38 +22,38 @@ async function collectConsoleMessages(page: any, url: string) {
   return messages;
 }
 
-test.describe('Browser-Konsole Monitoring', () => {
+test.describe('Browser Console Monitoring', () => {
 
-  test('Startseite: Keine console.error Ausgaben', async ({ page }) => {
+  test('Homepage: No console.error output', async ({ page }) => {
     const messages = await collectConsoleMessages(page, '/');
 
     const errors = messages.filter(m => m.type === 'error');
 
     if (errors.length > 0) {
-      console.log('\n Console Errors gefunden:');
+      console.log('\n Console errors found:');
       errors.forEach(e => console.log(`   -> ${e.text}`));
     }
 
-    expect(errors, `${errors.length} Console Error(s) gefunden`).toHaveLength(0);
+    expect(errors, `${errors.length} console error(s) found`).toHaveLength(0);
   });
 
-  test('Startseite: Console Warnings prüfen', async ({ page }) => {
+  test('Homepage: Check console warnings', async ({ page }) => {
     const messages = await collectConsoleMessages(page, '/');
 
     const warnings = messages.filter(m => m.type === 'warning');
 
     if (warnings.length > 0) {
-      console.log('\n Console Warnings gefunden:');
+      console.log('\n Console warnings found:');
       warnings.forEach(w => console.log(`   -> ${w.text}`));
     }
 
     test.info().annotations.push({
       type: 'warnings',
-      description: `${warnings.length} Warning(s) gefunden`,
+      description: `${warnings.length} warning(s) found`,
     });
   });
 
-  test('Keine 404 oder 500 API-Responses', async ({ page }) => {
+  test('No 404 or 500 API responses', async ({ page }) => {
     const badResponses: string[] = [];
 
     page.on('response', (response: any) => {
@@ -68,14 +68,14 @@ test.describe('Browser-Konsole Monitoring', () => {
     await page.waitForTimeout(2000);
 
     if (badResponses.length > 0) {
-      console.log('\n Fehlerhafte HTTP Responses:');
+      console.log('\n Bad HTTP responses:');
       badResponses.forEach(r => console.log(`   -> ${r}`));
     }
 
     expect(badResponses).toHaveLength(0);
   });
 
-  test('Screenshot der Startseite für visuellen Check', async ({ page }) => {
+  test('Screenshot of homepage for visual check', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 

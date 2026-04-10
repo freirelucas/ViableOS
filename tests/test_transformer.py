@@ -92,7 +92,7 @@ def _make_assessment(
 
 class TestTransformAssessment:
     def test_basic_transform_still_works(self):
-        """Bestehende Felder bleiben korrekt."""
+        """Existing fields remain correct."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         vs = config["viable_system"]
@@ -105,7 +105,7 @@ class TestTransformAssessment:
         assert vs["budget"]["strategy"] == "balanced"
 
     def test_operational_modes_generated(self):
-        """Operational modes werden aus external_forces + success_criteria abgeleitet."""
+        """Operational modes are derived from external_forces + success_criteria."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         modes = config["viable_system"]["operational_modes"]
@@ -127,7 +127,7 @@ class TestTransformAssessment:
         assert any("Kundenzufriedenheit" in t for t in modes["crisis"]["triggers"])
 
     def test_escalation_chains_generated(self):
-        """Escalation chains werden mit korrekten Pfaden und Timeouts generiert."""
+        """Escalation chains are generated with correct paths and timeouts."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         chains = config["viable_system"]["escalation_chains"]
@@ -146,7 +146,7 @@ class TestTransformAssessment:
         assert chains["algedonic"]["timeout_per_step"] == "15min"
 
     def test_vollzug_protocol_generated(self):
-        """Vollzug protocol ist enabled mit sinnvollen Timeouts."""
+        """Vollzug protocol is enabled with sensible timeouts."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         vollzug = config["viable_system"]["vollzug_protocol"]
@@ -157,7 +157,7 @@ class TestTransformAssessment:
         assert vollzug["on_timeout"] in ("escalate", "remind", "alert_human")
 
     def test_s1_autonomy_levels_generated(self):
-        """Jede S1-Unit bekommt strukturierte Autonomy-Levels."""
+        """Each S1 unit gets structured autonomy levels."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
 
@@ -170,7 +170,7 @@ class TestTransformAssessment:
             assert len(al["needs_approval"]) > 0
 
     def test_conflict_detection_generated(self):
-        """S2 bekommt Conflict Detection aus Dependencies."""
+        """S2 gets conflict detection from dependencies."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         cd = config["viable_system"]["system_2"]["conflict_detection"]
@@ -180,7 +180,7 @@ class TestTransformAssessment:
         assert cd["output_contradictions"] is True  # >1 S1 unit
 
     def test_transduction_mappings_generated(self):
-        """S2 bekommt Transduction Mappings aus Dependencies."""
+        """S2 gets transduction mappings from dependencies."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         tm = config["viable_system"]["system_2"]["transduction_mappings"]
@@ -190,7 +190,7 @@ class TestTransformAssessment:
         assert tm[0]["to_unit"] == "Produktion"
 
     def test_triple_index_generated(self):
-        """S3 bekommt Triple Index."""
+        """S3 gets triple index."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         ti = config["viable_system"]["system_3"]["triple_index"]
@@ -202,7 +202,7 @@ class TestTransformAssessment:
         assert len(ti["measurement"]) > 0
 
     def test_s3star_provider_constraint(self):
-        """S3* bekommt immer Provider-Constraint."""
+        """S3* always gets a provider constraint."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         s3star = config["viable_system"]["system_3_star"]
@@ -212,7 +212,7 @@ class TestTransformAssessment:
         assert len(s3star["independence_rules"]) >= 3
 
     def test_premises_register_from_forces(self):
-        """S4 bekommt Prämissen aus external_forces."""
+        """S4 gets premises from external_forces."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         pr = config["viable_system"]["system_4"]["premises_register"]
@@ -230,26 +230,26 @@ class TestTransformAssessment:
         assert ki_premise["check_frequency"] == "weekly"
 
     def test_algedonic_channel_from_never_do(self):
-        """Algedonic Channel triggers kommen aus identity.never_do."""
+        """Algedonic channel triggers come from identity.never_do."""
         assessment = _make_assessment(never_do=["Kundendaten verkaufen", "Mitarbeiter ausspionieren"])
         config = transform_assessment(assessment)
         ac = config["viable_system"]["identity"]["algedonic_channel"]
 
         assert ac["enabled"] is True
         assert ac["bypasses_hierarchy"] is True
-        assert "Systemische Fehlfunktion" in ac["triggers"]
+        assert "Systemic malfunction" in ac["triggers"]
         # never_do items should be in triggers (they get "Ethik:" prefix from _make_assessment)
         assert len(ac["triggers"]) >= 2
 
     def test_schema_validates(self):
-        """Transformiertes Assessment validiert gegen JSON Schema."""
+        """Transformed assessment validates against JSON schema."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
         errors = validate(config)
         assert errors == [], f"Schema validation errors: {errors}"
 
     def test_small_team_defaults(self):
-        """Team <= 2: kürzere Timeouts, mehr human_required."""
+        """Team <= 2: shorter timeouts, more human_required."""
         assessment = _make_assessment(team_size=1)
         config = transform_assessment(assessment)
         vs = config["viable_system"]
@@ -267,7 +267,7 @@ class TestTransformAssessment:
         assert vs["operational_modes"]["normal"]["reporting_frequency"] == "daily"
 
     def test_large_team_defaults(self):
-        """Team > 5: längere Timeouts, mehr Autonomie."""
+        """Team > 5: longer timeouts, more autonomy."""
         assessment = _make_assessment(team_size=10)
         config = transform_assessment(assessment)
         vs = config["viable_system"]
@@ -285,7 +285,7 @@ class TestTransformAssessment:
         assert vs["operational_modes"]["normal"]["reporting_frequency"] == "weekly"
 
     def test_no_external_forces(self):
-        """Ohne external_forces: sinnvolle Defaults statt Crash."""
+        """Without external_forces: sensible defaults instead of crash."""
         assessment = _make_assessment(external_forces=[])
         config = transform_assessment(assessment)
         vs = config["viable_system"]
@@ -300,7 +300,7 @@ class TestTransformAssessment:
         assert validate(config) == []
 
     def test_no_success_criteria(self):
-        """Ohne success_criteria: sinnvolle Crisis-Defaults."""
+        """Without success_criteria: sensible crisis defaults."""
         assessment = _make_assessment(success_criteria=[])
         config = transform_assessment(assessment)
         vs = config["viable_system"]

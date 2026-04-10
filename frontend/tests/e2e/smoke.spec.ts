@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Smoke Tests: Prüft ob ViableOS grundsätzlich funktioniert
- * Diese Tests sollten nach JEDER Änderung laufen
+ * Smoke Tests: Checks that ViableOS fundamentally works
+ * These tests should run after EVERY change
  */
 
 test.describe('App Smoke Tests', () => {
-  test('Startseite lädt erfolgreich', async ({ page }) => {
+  test('Homepage loads successfully', async ({ page }) => {
     const response = await page.goto('/');
 
     expect(response?.status()).toBeLessThan(400);
@@ -17,7 +17,7 @@ test.describe('App Smoke Tests', () => {
     await expect(root).toBeVisible();
   });
 
-  test('Keine kritischen Netzwerk-Fehler', async ({ page }) => {
+  test('No critical network errors', async ({ page }) => {
     const failedRequests: string[] = [];
 
     page.on('requestfailed', (request) => {
@@ -28,12 +28,12 @@ test.describe('App Smoke Tests', () => {
     await page.waitForLoadState('networkidle');
 
     if (failedRequests.length > 0) {
-      console.error('Fehlgeschlagene Requests:', failedRequests);
+      console.error('Failed requests:', failedRequests);
     }
     expect(failedRequests).toHaveLength(0);
   });
 
-  test('Keine unbehandelten JavaScript-Fehler', async ({ page }) => {
+  test('No unhandled JavaScript errors', async ({ page }) => {
     const jsErrors: string[] = [];
 
     page.on('pageerror', (error) => {
@@ -46,12 +46,12 @@ test.describe('App Smoke Tests', () => {
     await page.waitForTimeout(2000);
 
     if (jsErrors.length > 0) {
-      console.error('JavaScript Fehler:', jsErrors);
+      console.error('JavaScript errors:', jsErrors);
     }
     expect(jsErrors).toHaveLength(0);
   });
 
-  test('Seite hat einen Titel', async ({ page }) => {
+  test('Page has a title', async ({ page }) => {
     await page.goto('/');
     const title = await page.title();
     expect(title).toBeTruthy();

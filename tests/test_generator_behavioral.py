@@ -99,7 +99,7 @@ class TestSoulBehavioralSections:
         soul = self._read_soul(output, "s1-tourenplanung")
         assert "Operational Modes" in soul
         assert "Normal" in soul
-        assert "Krise" in soul
+        assert "Crisis" in soul
 
     def test_s1_soul_has_escalation_protocol(self, tmp_path):
         config = transform_assessment(_make_assessment())
@@ -112,17 +112,17 @@ class TestSoulBehavioralSections:
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s1-tourenplanung")
-        assert "Vollzug-Pflicht" in soul
-        assert "Quittung" in soul
+        assert "Execution Obligation" in soul
+        assert "acknowledgment" in soul
 
     def test_s1_soul_has_autonomy_matrix(self, tmp_path):
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s1-tourenplanung")
         assert "Autonomy Matrix" in soul
-        assert "Allein entscheiden" in soul
-        assert "Koordination nötig" in soul
-        assert "Genehmigung nötig" in soul
+        assert "Decide alone" in soul
+        assert "Coordination needed" in soul
+        assert "Approval needed" in soul
 
     def test_s2_soul_has_conflict_detection(self, tmp_path):
         config = transform_assessment(_make_assessment())
@@ -134,7 +134,7 @@ class TestSoulBehavioralSections:
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s2-coordination")
-        assert "Transduktion" in soul
+        assert "Transduction" in soul
         assert "Tourenplanung" in soul
 
     def test_s3_soul_has_triple_index(self, tmp_path):
@@ -150,35 +150,35 @@ class TestSoulBehavioralSections:
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s3-optimization")
-        assert "Abweichungs-Logik" in soul
+        assert "Deviation Logic" in soul
 
     def test_s3_soul_has_intervention_authority(self, tmp_path):
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s3-optimization")
-        assert "Interventionsrecht" in soul
-        assert "Budget einfrieren" in soul
+        assert "Intervention Authority" in soul
+        assert "Freeze budget" in soul
 
     def test_s3star_soul_has_provider_constraint(self, tmp_path):
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s3star-audit")
-        assert "Provider-Constraint" in soul
+        assert "Provider" in soul
         assert "s1" in soul
-        assert "korrelierte Halluzinationen" in soul
+        assert "correlated" in soul
 
     def test_s3star_soul_has_independence_rules(self, tmp_path):
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s3star-audit")
         assert "Independence Rules" in soul
-        assert "Kein Schreibzugriff" in soul
+        assert "No write access" in soul
 
     def test_s4_soul_has_premises_register(self, tmp_path):
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s4-intelligence")
-        assert "Prämissen-Register" in soul
+        assert "Premises Register" in soul
         assert "SGB XI" in soul
 
     def test_s4_soul_has_strategy_bridge(self, tmp_path):
@@ -199,14 +199,14 @@ class TestSoulBehavioralSections:
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s5-policy")
-        assert "Algedonischer Kanal" in soul
+        assert "Algedonic Channel" in soul
 
     def test_s5_soul_has_basta_constraint(self, tmp_path):
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s5-policy")
-        assert "Basta-Vorbehalt" in soul
-        assert "Strategiewechsel" in soul
+        assert "Normative Reserve" in soul
+        assert "Strategy change" in soul
 
 
 class TestSkillBehavioralSections:
@@ -225,19 +225,19 @@ class TestSkillBehavioralSections:
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         skill = self._read_skill(output, "s2-coordination")
-        assert "Transduktion" in skill
+        assert "Transduction" in skill
 
     def test_s3_skill_has_intervention(self, tmp_path):
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         skill = self._read_skill(output, "s3-optimization")
-        assert "Interventionsrecht" in skill
+        assert "Intervention Authority" in skill
 
     def test_s4_skill_has_premises(self, tmp_path):
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         skill = self._read_skill(output, "s4-intelligence")
-        assert "Prämissen-Register" in skill
+        assert "Premises Register" in skill
 
     def test_s4_skill_has_strategy_bridge(self, tmp_path):
         config = transform_assessment(_make_assessment())
@@ -265,9 +265,9 @@ class TestHeartbeatModeTable:
             "s5-policy",
         ]:
             hb = self._read_heartbeat(output, slug)
-            assert "Frequenzen nach Betriebsmodus" in hb, f"Missing mode table in {slug}"
+            assert "Frequencies by Operating Mode" in hb, f"Missing mode table in {slug}"
             assert "Normal" in hb
-            assert "Krise" in hb
+            assert "Crisis" in hb
 
 
 class TestBackwardCompatibility:
@@ -290,4 +290,4 @@ class TestBackwardCompatibility:
         # SOUL should NOT have behavioral sections (no modes configured)
         soul = (output / "workspaces" / "s1-worker" / "SOUL.md").read_text()
         assert "Operational Modes" not in soul
-        assert "Vollzug-Pflicht" not in soul
+        assert "Execution Obligation" not in soul

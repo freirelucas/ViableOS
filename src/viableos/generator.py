@@ -149,16 +149,16 @@ def _generate_s2_skill(
     if conflict_detection:
         checks = []
         if conflict_detection.get("resource_overlaps"):
-            checks.append("- Ressourcen-Überlappung zwischen Einheiten erkennen")
+            checks.append("- Detect resource overlaps between units")
         if conflict_detection.get("deadline_conflicts"):
-            checks.append("- Terminkonflikte erkennen")
+            checks.append("- Detect deadline conflicts")
         if conflict_detection.get("output_contradictions"):
-            checks.append("- Widersprüchliche Outputs erkennen")
+            checks.append("- Detect contradictory outputs")
         for trigger in conflict_detection.get("custom_triggers", []):
             checks.append(f"- {trigger}")
         if checks:
             conflict_section = f"""
-## Conflict Detection (automatisch)
+## Conflict Detection (automatic)
 {chr(10).join(checks)}
 """
 
@@ -169,7 +169,7 @@ def _generate_s2_skill(
         for m in transduction_mappings:
             lines.append(f"- {m['from_unit']} → {m['to_unit']}: {m['translation']}")
         transduction_section = f"""
-## Fachsprachen-Übersetzung (Transduktion)
+## Domain Language Translation (Transduction)
 {chr(10).join(lines)}
 """
 
@@ -226,12 +226,12 @@ def _generate_s3_skill(
         max_dur = intervention_authority.get("max_duration", "48h")
         needs_human = intervention_authority.get("requires_human_approval", False)
         intervention_section = f"""
-## Interventionsrecht (Kanal 3)
-Du DARFST in begründeten Fällen:
+## Intervention Authority (Channel 3)
+You MAY in justified cases:
 {actions}
-Jede Intervention muss dokumentiert und begründet werden.
-Maximale Dauer ohne Mensch-Bestätigung: {max_dur}.
-{"Jede Intervention braucht vorab Mensch-Genehmigung." if needs_human else "Du darfst in akuten Fällen sofort handeln — Dokumentation danach."}
+Every intervention must be documented and justified.
+Maximum duration without human confirmation: {max_dur}.
+{"Every intervention requires prior human approval." if needs_human else "You may act immediately in acute cases — document afterwards."}
 """
 
     return f"""# Optimizer — Reporting Skills
@@ -327,11 +327,11 @@ def _generate_s4_skill(
         lines = []
         for p in premises_register:
             lines.append(
-                f"- **{p['premise']}** (prüfen: {p.get('check_frequency', '?')})"
+                f"- **{p['premise']}** (check: {p.get('check_frequency', '?')})"
             )
         premises_section = f"""
-## Prämissen-Register
-Folgende Annahmen kontinuierlich prüfen:
+## Premises Register
+Continuously check the following assumptions:
 {chr(10).join(lines)}
 """
 
@@ -340,9 +340,9 @@ Folgende Annahmen kontinuierlich prüfen:
     if strategy_bridge:
         bridge_section = f"""
 ## Strategy Bridge
-Erkenntnisse einspeisen: {strategy_bridge.get('injection_point', '?')}
+Inject insights: {strategy_bridge.get('injection_point', '?')}
 Format: {strategy_bridge.get('format', '?')}
-Empfänger: {strategy_bridge.get('recipient', '?')}
+Recipient: {strategy_bridge.get('recipient', '?')}
 """
 
     return f"""# Scout — Intelligence Skills
@@ -433,15 +433,15 @@ def _render_heartbeat_mode_table(operational_modes: dict[str, Any] | None) -> st
     elevated = operational_modes.get("elevated", {})
     crisis = operational_modes.get("crisis", {})
     return f"""
-## Frequenzen nach Betriebsmodus
+## Frequencies by Operating Mode
 
-| Check | Normal | Erhöht | Krise |
-|-------|--------|--------|-------|
-| Status-Report | {normal.get('reporting_frequency', 'weekly')} | {elevated.get('reporting_frequency', 'daily')} | {crisis.get('reporting_frequency', 'hourly')} |
-| Vollzugs-Check | daily | every 4h | hourly |
-| Prämissen-Check (S4) | monthly | weekly | daily |
-| Balance-Check (S5) | weekly | daily | daily |
-| Audit-Sample (S3*) | every 4h | every 2h | every 1h |
+| Check | Normal | Elevated | Crisis |
+|-------|--------|----------|--------|
+| Status Report | {normal.get('reporting_frequency', 'weekly')} | {elevated.get('reporting_frequency', 'daily')} | {crisis.get('reporting_frequency', 'hourly')} |
+| Execution Check | daily | every 4h | hourly |
+| Premises Check (S4) | monthly | weekly | daily |
+| Balance Check (S5) | weekly | daily | daily |
+| Audit Sample (S3*) | every 4h | every 2h | every 1h |
 """
 
 

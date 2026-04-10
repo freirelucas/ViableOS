@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright Konfiguration für ViableOS Frontend
- * Startet automatisch den Vite Dev-Server vor den Tests
+ * Playwright configuration for ViableOS Frontend
+ * Automatically starts the Vite dev server before tests
  */
 export default defineConfig({
   testDir: './tests/e2e',
@@ -37,7 +37,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
     },
-    // Backend (FastAPI auf Port 8000) - uncomment wenn automatisch starten gewünscht
+    // Backend (FastAPI on port 8000) - uncomment to start automatically
     // {
     //   command: 'cd ../src && python -m uvicorn viableos.api.main:app --port 8000',
     //   url: 'http://localhost:8000/health',

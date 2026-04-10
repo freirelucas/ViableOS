@@ -1,17 +1,17 @@
 # CLAUDE.md — ViableOS
 
-## Projekt
+## Project
 
 ViableOS — "The operating system for viable AI agent organizations."
-Design-Tool das Organisationen auf Basis des Viable System Model (VSM) strukturiert und Agent-Konfigurationen generiert.
+A design tool that structures organizations based on the Viable System Model (VSM) and generates agent configurations.
 
 ## Tech Stack
 
 - **Backend**: Python 3.10+, FastAPI, LiteLLM, PyMuPDF
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS 4, Zustand
-- **Kein DB** — alles in-memory (Sessions, FileStore). Ephemeral by design.
+- **No DB** — everything in-memory (Sessions, FileStore). Ephemeral by design.
 
-## Architektur
+## Architecture
 
 ```
 src/viableos/
@@ -40,29 +40,29 @@ frontend/src/
 
 ## Chat Flow
 
-1. User chattet mit VSM-Experte (LiteLLM streaming via SSE)
-2. Kann PDFs, Screenshots, Dateien hochladen (drag&drop, paste, paperclip)
-3. LLM führt 4-Phasen Assessment-Interview
-4. "Finalize Assessment" extrahiert JSON aus letzter Assistant-Message
-5. "Use in Wizard" transformiert → öffnet Config-Wizard
-6. Wizard Step 6 (ReviewStep) ruft `/api/check` für Viability-Report
+1. User chats with VSM expert (LiteLLM streaming via SSE)
+2. Can upload PDFs, screenshots, files (drag&drop, paste, paperclip)
+3. LLM conducts a 4-phase assessment interview
+4. "Finalize Assessment" extracts JSON from last assistant message
+5. "Use in Wizard" transforms → opens Config Wizard
+6. Wizard Step 6 (ReviewStep) calls `/api/check` for Viability Report
 
 ## SSE Streaming
 
-**Wichtig**: Chunks werden JSON-encoded gesendet (`json.dumps(chunk)`), damit Newlines in LLM-Output das SSE-Format nicht brechen. Frontend parst mit `JSON.parse()`.
+**Important**: Chunks are sent JSON-encoded (`json.dumps(chunk)`) so that newlines in LLM output don't break the SSE format. Frontend parses with `JSON.parse()`.
 
-## Bekannte Patterns
+## Known Patterns
 
-- API Keys nur in-memory (nie persistiert, kein localStorage)
-- CSS Variables statt hardcoded colors (`var(--color-primary)` etc.)
-- Provider-Abstraktion über LiteLLM (Anthropic, OpenAI, Google, DeepSeek, xAI, Ollama)
-- `system_prompt.py` enthält tiefes VSM-Wissen, aber der LLM darf NIEMALS akademische Begriffe verwenden
+- API keys only in-memory (never persisted, no localStorage)
+- CSS variables instead of hardcoded colors (`var(--color-primary)` etc.)
+- Provider abstraction via LiteLLM (Anthropic, OpenAI, Google, DeepSeek, xAI, Ollama)
+- `system_prompt.py` contains deep VSM knowledge, but the LLM must NEVER use academic terms
 
 ## Testing
 
-### Test-Befehle
+### Test Commands
 ```bash
-# TypeScript prüfen
+# TypeScript check
 cd frontend && npx tsc --noEmit
 
 # Linting
@@ -71,29 +71,29 @@ cd frontend && npm run lint
 # Unit Tests (Vitest)
 cd frontend && vitest run
 
-# E2E Tests (Playwright – startet Dev-Server automatisch)
+# E2E Tests (Playwright – starts dev server automatically)
 cd frontend && npx playwright test
 
 # Backend Tests
 pytest tests/ -v
 ```
 
-### Test-Reihenfolge bei Code-Änderungen
-1. **TypeScript Check**: `npx tsc --noEmit` → Muss ohne Fehler durchlaufen
-2. **Unit Tests**: `vitest run` → Alle grün?
-3. **E2E Tests**: `npx playwright test` → Alle grün?
-4. **Backend Tests**: `pytest tests/ -v` → Alle grün?
-5. Erst wenn alles grün ist: committen
+### Test Order for Code Changes
+1. **TypeScript Check**: `npx tsc --noEmit` → Must pass without errors
+2. **Unit Tests**: `vitest run` → All green?
+3. **E2E Tests**: `npx playwright test` → All green?
+4. **Backend Tests**: `pytest tests/ -v` → All green?
+5. Only commit when everything is green
 
-### Wenn Tests fehlschlagen
-- Playwright Screenshots: `frontend/tests/e2e/screenshots/`
-- Playwright HTML-Report: `cd frontend && npx playwright show-report`
-- Console-Errors werden direkt im Test-Output angezeigt
-- Fix den Fehler und lauf die Tests erneut bevor du weiter machst
+### When Tests Fail
+- Playwright screenshots: `frontend/tests/e2e/screenshots/`
+- Playwright HTML report: `cd frontend && npx playwright show-report`
+- Console errors are shown directly in the test output
+- Fix the error and re-run the tests before continuing
 
 ## Gotchas
 
-- `checker.py`: success_criteria priorities können `int` oder `string` sein — immer mit `str()` casten
-- `assessment_transformer.py`: Gibt `{"viable_system": {...}}` zurück, nicht nur das viable_system
-- FileStore ist global singleton (`file_store`) — kein Cleanup implementiert
-- `max_tokens=4096` in engine.py — bei langen Assessment-JSONs ggf. zu wenig
+- `checker.py`: success_criteria priorities can be `int` or `string` — always cast with `str()`
+- `assessment_transformer.py`: Returns `{"viable_system": {...}}`, not just the viable_system
+- FileStore is a global singleton (`file_store`) — no cleanup implemented
+- `max_tokens=4096` in engine.py — may be too low for long assessment JSONs
