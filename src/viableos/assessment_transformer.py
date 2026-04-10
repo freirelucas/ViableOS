@@ -25,8 +25,12 @@ def _classify_external_force(force: dict[str, Any]) -> str:
     """Classify an external force into competitors/technology/regulation."""
     name_lower = force.get("name", "").lower()
     regulation_keywords = [
+        # German keywords
         "sgb", "dsgvo", "datenschutz", "compliance", "gesetz", "recht",
-        "verordnung", "regulation", "vergütung", "§",
+        "verordnung", "vergütung", "§",
+        # English keywords
+        "regulation", "gdpr", "privacy", "law", "legal", "ordinance",
+        "compensation", "regulatory",
     ]
     tech_keywords = [
         "technolog", "llm", "ki", "ai", "algorithm", "software", "api",
@@ -259,16 +263,16 @@ def _build_operational_modes(assessment: dict[str, Any]) -> dict[str, Any]:
     criteria = assessment.get("success_criteria", [])
 
     # Elevated triggers from external forces (risks)
-    elevated_triggers = [f["name"] for f in forces[:3]] if forces else ["Externer Druck erkannt"]
+    elevated_triggers = [f["name"] for f in forces[:3]] if forces else ["External pressure detected"]
 
     # Crisis triggers from inverted priority-1 success criteria
     crisis_triggers = []
     for c in criteria:
         prio = c.get("priority", 2)
         if str(prio) == "1":
-            crisis_triggers.append(f"Scheitern: {c['criterion']}")
+            crisis_triggers.append(f"Failure: {c['criterion']}")
     if not crisis_triggers:
-        crisis_triggers = ["Kritischer Systemausfall"]
+        crisis_triggers = ["Critical system failure"]
 
     # Reporting frequency proportional to team size
     if team_size <= 2:
@@ -283,24 +287,24 @@ def _build_operational_modes(assessment: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "normal": {
-            "description": "Tagesbetrieb, volle Autonomie der Einheiten",
+            "description": "Day-to-day operations, full unit autonomy",
             "s1_autonomy": "full",
             "reporting_frequency": normal_freq,
             "escalation_threshold": "2h" if team_size <= 2 else "4h",
         },
         "elevated": {
-            "description": "Erhöhte Wachsamkeit bei externem Druck",
+            "description": "Heightened vigilance under external pressure",
             "triggers": elevated_triggers,
             "s1_autonomy": "standard",
             "reporting_frequency": elevated_freq,
             "escalation_threshold": "30min" if team_size <= 2 else "1h",
         },
         "crisis": {
-            "description": "Akute Krise, zentrale Steuerung",
+            "description": "Acute crisis, centralized control",
             "triggers": crisis_triggers,
             "s1_autonomy": "restricted",
             "reporting_frequency": "hourly",
-            "escalation_threshold": "sofort",
+            "escalation_threshold": "immediate",
             "human_required": True,
         },
     }
@@ -320,7 +324,7 @@ def _build_escalation_chains(assessment: dict[str, Any]) -> dict[str, Any]:
         timeout = "4h"
 
     algedonic_triggers = list(never_do) if never_do else []
-    algedonic_triggers.append("Systemische Fehlfunktion")
+    algedonic_triggers.append("Systemic malfunction")
 
     return {
         "operational": {
@@ -338,7 +342,7 @@ def _build_escalation_chains(assessment: dict[str, Any]) -> dict[str, Any]:
         "algedonic": {
             "path": ["s5-policy", "human"],
             "timeout_per_step": "15min",
-            "description": "Schmerzsignal bei fundamentalem Problem",
+            "description": "Pain signal for fundamental problem",
             "triggers": algedonic_triggers,
         },
     }
@@ -386,16 +390,16 @@ def _build_s1_autonomy_levels(
     if purpose:
         can_do_alone.append(purpose)
     for tool in tools:
-        can_do_alone.append(f"Nutzung von {tool}")
+        can_do_alone.append(f"Use of {tool}")
 
     needs_coordination = []
     for dep in dependencies:
         if dep.get("from") == unit_name or dep.get("to") == unit_name:
-            needs_coordination.append(dep.get("description", "Abstimmung mit anderer Unit"))
+            needs_coordination.append(dep.get("description", "Coordination with other unit"))
 
     return {
         "can_do_alone": can_do_alone,
-        "needs_coordination": needs_coordination if needs_coordination else ["Ressourcenteilung mit anderen Units"],
+        "needs_coordination": needs_coordination if needs_coordination else ["Resource sharing with other units"],
         "needs_approval": list(approval_required),
     }
 
@@ -410,7 +414,7 @@ def _build_conflict_detection(
     for dep in dependencies:
         desc = dep.get("description", "")
         if desc:
-            custom_triggers.append(f"Konfliktpotential: {desc}")
+            custom_triggers.append(f"Conflict potential: {desc}")
 
     return {
         "resource_overlaps": len(shared_resources) > 0,
@@ -433,7 +437,7 @@ def _build_transduction_mappings(
             mappings.append({
                 "from_unit": from_unit,
                 "to_unit": to_unit,
-                "translation": f"Was {from_unit} als '{desc}' liefert, ist für {to_unit} ein Input",
+                "translation": f"What {from_unit} delivers as '{desc}' is an input for {to_unit}",
             })
     return mappings
 
@@ -444,15 +448,15 @@ def _build_triple_index(
 ) -> dict[str, Any]:
     """Build S3 triple index from KPIs and success criteria."""
     kpis = s3_config.get("kpi_list", [])
-    measurement = "; ".join(kpis[:3]) if kpis else "Output-Menge, Qualität, Durchlaufzeit"
+    measurement = "; ".join(kpis[:3]) if kpis else "Output volume, quality, throughput time"
 
     criteria_texts = [c.get("criterion", "") for c in success_criteria[:2]]
-    criteria_hint = "; ".join(criteria_texts) if criteria_texts else "Kernleistung"
+    criteria_hint = "; ".join(criteria_texts) if criteria_texts else "Core performance"
 
     return {
-        "actuality": f"Aktuelle Leistung gemessen an: {criteria_hint}",
-        "capability": "Maximalleistung bei optimaler Auslastung aller Einheiten",
-        "potentiality": "Erreichbare Leistung bei gezielter Investition in Engpässe",
+        "actuality": f"Current performance measured against: {criteria_hint}",
+        "capability": "Maximum performance at optimal utilization of all units",
+        "potentiality": "Achievable performance with targeted investment in bottlenecks",
         "measurement": measurement,
     }
 
@@ -480,9 +484,9 @@ def _build_intervention_authority(assessment: dict[str, Any]) -> dict[str, Any]:
         "requires_human_approval": team_size <= 2,
         "max_duration": "48h",
         "allowed_actions": [
-            "Budget einfrieren",
-            "Aufgabe umleiten",
-            "Modell downgraden",
+            "Freeze budget",
+            "Reroute task",
+            "Downgrade model",
         ],
     }
 
@@ -492,13 +496,13 @@ def _build_s3star_extensions() -> dict[str, Any]:
     return {
         "provider_constraint": {
             "must_differ_from": "s1",
-            "reason": "Verhindert korrelierte Halluzinationen",
+            "reason": "Prevents correlated hallucinations",
         },
         "reporting_target": "s3",
         "independence_rules": [
-            "Kein Schreibzugriff auf S1-Workspaces",
-            "Kein Zugang zu S1-Prompts",
-            "Eigene Datenquellen für Verifikation",
+            "No write access to S1 workspaces",
+            "No access to S1 prompts",
+            "Own data sources for verification",
         ],
     }
 
@@ -516,12 +520,12 @@ def _build_premises_register(
     for force in external_forces:
         force_type = _classify_external_force(force)
         freq = type_to_frequency.get(force_type, "monthly")
-        name = force.get("name", "Unbekannte Kraft")
+        name = force.get("name", "Unknown force")
         premises.append({
-            "premise": f"Annahme bezüglich: {name}",
+            "premise": f"Assumption regarding: {name}",
             "check_frequency": freq,
-            "invalidation_signal": f"Signifikante Änderung bei: {name}",
-            "consequence_if_invalid": f"Strategie bezüglich {name} muss überprüft werden",
+            "invalidation_signal": f"Significant change in: {name}",
+            "consequence_if_invalid": f"Strategy regarding {name} must be reviewed",
         })
     return premises
 
@@ -530,8 +534,8 @@ def _build_strategy_bridge(s3_config: dict[str, Any]) -> dict[str, Any]:
     """Build S4 strategy bridge tied to S3 reporting rhythm."""
     rhythm = s3_config.get("reporting_rhythm", "weekly")
     return {
-        "injection_point": f"Vor dem {rhythm}-Reporting",
-        "format": "Strategisches Briefing mit max. 3 Handlungsempfehlungen",
+        "injection_point": f"Before the {rhythm} reporting",
+        "format": "Strategic briefing with max. 3 action recommendations",
         "recipient": "s3-optimization",
     }
 
@@ -550,12 +554,12 @@ def _build_identity_extensions(
 
     never_do = identity.get("never_do", [])
     algedonic_triggers = list(never_do) if never_do else []
-    algedonic_triggers.append("Systemische Fehlfunktion")
+    algedonic_triggers.append("Systemic malfunction")
 
     return {
         "balance_monitoring": {
             "s3_vs_s4_target": target,
-            "measurement": "Anteil der Agent-Tokens die in S3 vs S4 fließen",
+            "measurement": "Share of agent tokens flowing into S3 vs S4",
             "alert_if_exceeds": alert,
         },
         "algedonic_channel": {
@@ -565,11 +569,11 @@ def _build_identity_extensions(
             "bypasses_hierarchy": True,
         },
         "basta_constraint": {
-            "description": "Normative Entscheide bei Unentscheidbarkeit",
+            "description": "Normative decisions in cases of undecidability",
             "examples": [
-                "Strategiewechsel",
-                "Fusion/Übernahme",
-                "Ethik-Dilemma",
+                "Strategy change",
+                "Merger/Acquisition",
+                "Ethics dilemma",
             ],
             "agent_role": "prepare_only",
         },

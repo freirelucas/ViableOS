@@ -25,12 +25,12 @@ def _render_operational_modes(modes: dict[str, Any] | None) -> str:
 
     return f"""
 ## Operational Modes
-- **Normal**: {normal.get('description', 'Tagesbetrieb')}. Autonomie: {normal.get('s1_autonomy', 'full')}. Reporting: {normal.get('reporting_frequency', 'weekly')}.
-- **Erhöhte Aktivität**: {elevated.get('description', 'Erhöhte Wachsamkeit')}. Autonomie: {elevated.get('s1_autonomy', 'standard')}. Reporting: {elevated.get('reporting_frequency', 'daily')}.
-  Trigger:
+- **Normal**: {normal.get('description', 'Daily operations')}. Autonomy: {normal.get('s1_autonomy', 'full')}. Reporting: {normal.get('reporting_frequency', 'weekly')}.
+- **Elevated Activity**: {elevated.get('description', 'Elevated vigilance')}. Autonomy: {elevated.get('s1_autonomy', 'standard')}. Reporting: {elevated.get('reporting_frequency', 'daily')}.
+  Triggers:
 {elevated_triggers}
-- **Krise**: {crisis.get('description', 'Akute Krise')}. Autonomie: {crisis.get('s1_autonomy', 'restricted')}. Reporting: {crisis.get('reporting_frequency', 'hourly')}.{' Mensch muss Krise aktivieren.' if crisis.get('human_required') else ''}
-  Trigger:
+- **Crisis**: {crisis.get('description', 'Acute crisis')}. Autonomy: {crisis.get('s1_autonomy', 'restricted')}. Reporting: {crisis.get('reporting_frequency', 'hourly')}.{' Human must activate crisis mode.' if crisis.get('human_required') else ''}
+  Triggers:
 {crisis_triggers}
 """
 
@@ -64,12 +64,12 @@ def _render_escalation_protocol(
 
     return f"""
 ## Escalation Protocol
-Deine Eskalationskette: {path}
-Timeout pro Stufe: {timeout}
+Your escalation chain: {path}
+Timeout per step: {timeout}
 
-Bei algedonischem Signal (fundamentales Problem):
-Direkt an {algedonic_path}.
-Auslöser:
+On algedonic signal (fundamental problem):
+Directly to {algedonic_path}.
+Triggers:
 {algedonic_triggers}
 """
 
@@ -79,11 +79,11 @@ def _render_vollzug_protocol(vollzug: dict[str, Any] | None) -> str:
     if not vollzug or not vollzug.get("enabled"):
         return ""
     return f"""
-## Vollzug-Pflicht
-Auf jeden Auftrag antwortest du mit einer **Quittung** innerhalb von {vollzug.get('timeout_quittung', '30min')}.
-Nach Erledigung sendest du eine **Vollzugsmeldung**.
-Ohne Vollzugsmeldung gilt der Auftrag als NICHT erledigt.
-Bei Timeout ({vollzug.get('timeout_vollzug', '48h')} ohne Vollzug): {vollzug.get('on_timeout', 'escalate')}.
+## Execution Obligation
+For every task you respond with an **acknowledgment** within {vollzug.get('timeout_quittung', '30min')}.
+After completion you send a **completion report**.
+Without a completion report the task is considered NOT done.
+On timeout ({vollzug.get('timeout_vollzug', '48h')} without completion): {vollzug.get('on_timeout', 'escalate')}.
 """
 
 
@@ -186,11 +186,11 @@ The central object is **{obj}**: {flow}
         needs_appr = _bullet_list(autonomy_levels.get("needs_approval", []))
         autonomy_section = f"""
 ## Autonomy Matrix
-### Allein entscheiden
+### Decide alone
 {can_do}
-### Koordination nötig (über S2)
+### Coordination needed (via S2)
 {needs_coord}
-### Genehmigung nötig (Mensch)
+### Approval needed (human)
 {needs_appr}
 """
     else:
@@ -311,16 +311,16 @@ You coordinate handoffs between units along this flow.
     if conflict_detection:
         checks = []
         if conflict_detection.get("resource_overlaps"):
-            checks.append("- Ressourcen-Überlappung zwischen Einheiten erkennen")
+            checks.append("- Detect resource overlaps between units")
         if conflict_detection.get("deadline_conflicts"):
-            checks.append("- Terminkonflikte erkennen")
+            checks.append("- Detect deadline conflicts")
         if conflict_detection.get("output_contradictions"):
-            checks.append("- Widersprüchliche Outputs erkennen")
+            checks.append("- Detect contradictory outputs")
         for trigger in conflict_detection.get("custom_triggers", []):
             checks.append(f"- {trigger}")
         if checks:
             conflict_section = f"""
-## Conflict Detection (automatisch prüfen)
+## Conflict Detection (check automatically)
 {chr(10).join(checks)}
 """
 
@@ -331,7 +331,7 @@ You coordinate handoffs between units along this flow.
         for m in transduction_mappings:
             lines.append(f"- **{m['from_unit']}** → **{m['to_unit']}**: {m['translation']}")
         transduction_section = f"""
-## Fachsprachen-Übersetzung (Transduktion)
+## Domain Language Translation (Transduction)
 {chr(10).join(lines)}
 """
 
@@ -436,11 +436,11 @@ Your reporting must cover progress against these criteria.
     if triple_index:
         triple_section = f"""
 ## Triple Index (Beer)
-Für jede Einheit misst du:
-- **Actuality**: {triple_index.get('actuality', '?')} — was leistet sie jetzt?
-- **Capability**: {triple_index.get('capability', '?')} — was könnte sie bei Vollauslastung?
-- **Potentiality**: {triple_index.get('potentiality', '?')} — was wäre mit Investition möglich?
-Maßeinheit: {triple_index.get('measurement', '?')}
+For each unit you measure:
+- **Actuality**: {triple_index.get('actuality', '?')} — what is it delivering now?
+- **Capability**: {triple_index.get('capability', '?')} — what could it deliver at full capacity?
+- **Potentiality**: {triple_index.get('potentiality', '?')} — what would be possible with investment?
+Unit of measurement: {triple_index.get('measurement', '?')}
 """
 
     # ── Behavioral Specs: Deviation Logic ──
@@ -449,9 +449,9 @@ Maßeinheit: {triple_index.get('measurement', '?')}
         threshold = deviation_logic.get("threshold_percent", 15)
         trend = deviation_logic.get("trend_detection", False)
         deviation_section = f"""
-## Abweichungs-Logik
-Melde NUR Abweichungen > {threshold}%. "Alles normal" ist KEIN Report.
-{"Bei 3x hintereinander leichtem Rückgang: Trend melden, auch wenn Einzelwert unter Schwelle." if trend else ""}
+## Deviation Logic
+Report ONLY deviations > {threshold}%. "Everything normal" is NOT a report.
+{"If 3 consecutive slight declines: report the trend, even if individual values are below threshold." if trend else ""}
 """
 
     # ── Behavioral Specs: Intervention Authority ──
@@ -461,12 +461,12 @@ Melde NUR Abweichungen > {threshold}%. "Alles normal" ist KEIN Report.
         max_dur = intervention_authority.get("max_duration", "48h")
         needs_human = intervention_authority.get("requires_human_approval", False)
         intervention_section = f"""
-## Interventionsrecht (Kanal 3)
-Du DARFST in begründeten Fällen:
+## Intervention Authority (Channel 3)
+You MAY in justified cases:
 {actions}
-ABER: Jede Intervention muss dokumentiert und begründet werden.
-Maximale Dauer ohne Mensch-Bestätigung: {max_dur}.
-{"Jede Intervention braucht vorab Mensch-Genehmigung." if needs_human else "Du darfst in akuten Fällen sofort handeln — Dokumentation danach."}
+BUT: Every intervention must be documented and justified.
+Maximum duration without human confirmation: {max_dur}.
+{"Every intervention requires prior human approval." if needs_human else "You may act immediately in acute cases — document afterwards."}
 """
 
     modes_section = _render_operational_modes(operational_modes)
@@ -551,7 +551,7 @@ def generate_s3star_soul(
         if c.get("data_source"):
             line += f", Data: {c['data_source']}"
         if c.get("comparison"):
-            line += f"\n  Vergleich: {c['comparison']}"
+            line += f"\n  Comparison: {c['comparison']}"
         checks_lines.append(line)
     checks_text = "\n".join(checks_lines) if checks_lines else "- No audit checks defined yet."
 
@@ -570,8 +570,8 @@ audit allowed data exfiltration. You are the security backstop.
         reason = provider_constraint.get("reason", "")
         provider_section = f"""
 ## CRITICAL: Independence (security-critical)
-Provider-Constraint: Muss sich von **{must_differ}** unterscheiden.
-Grund: {reason}
+Provider constraint: Must differ from **{must_differ}**.
+Reason: {reason}
 
 Research shows: in 65% of test scenarios, agents without cross-provider
 audit allowed data exfiltration. You are the security backstop.
@@ -588,11 +588,11 @@ audit allowed data exfiltration. You are the security backstop.
     # ── Reporting Target ──
     reporting_section = ""
     if reporting_target:
-        target_text = "S3 (Optimizer)" if reporting_target == "s3" else "S3 (Optimizer) UND direkt an den Menschen"
+        target_text = "S3 (Optimizer)" if reporting_target == "s3" else "S3 (Optimizer) AND directly to the human"
         reporting_section = f"""
 ## Reporting Target
-Audit-Ergebnisse gehen an: {target_text}.
-NIEMALS direkt an S1-Units — das würde die Unabhängigkeit kompromittieren.
+Audit results go to: {target_text}.
+NEVER directly to S1 units — that would compromise independence.
 """
 
     modes_section = _render_operational_modes(operational_modes)
@@ -679,13 +679,13 @@ def generate_s4_soul(
         lines = []
         for p in premises_register:
             lines.append(
-                f"- **{p['premise']}** — Prüfen: {p.get('check_frequency', '?')}\n"
-                f"  Invalidierungs-Signal: {p.get('invalidation_signal', '?')}\n"
-                f"  Wenn ungültig: {p.get('consequence_if_invalid', '?')}"
+                f"- **{p['premise']}** — Check: {p.get('check_frequency', '?')}\n"
+                f"  Invalidation signal: {p.get('invalidation_signal', '?')}\n"
+                f"  If invalid: {p.get('consequence_if_invalid', '?')}"
             )
         premises_section = f"""
-## Prämissen-Register
-Folgende Annahmen musst du kontinuierlich prüfen:
+## Premises Register
+The following assumptions must be continuously verified:
 {chr(10).join(lines)}
 """
 
@@ -694,9 +694,9 @@ Folgende Annahmen musst du kontinuierlich prüfen:
     if strategy_bridge:
         bridge_section = f"""
 ## Strategy Bridge
-Deine Erkenntnisse fließen ein: {strategy_bridge.get('injection_point', '?')}
+Your insights feed into: {strategy_bridge.get('injection_point', '?')}
 Format: {strategy_bridge.get('format', '?')}
-Empfänger: {strategy_bridge.get('recipient', '?')}
+Recipient: {strategy_bridge.get('recipient', '?')}
 """
 
     # ── Behavioral Specs: Weak Signals ──
@@ -705,12 +705,12 @@ Empfänger: {strategy_bridge.get('recipient', '?')}
         sources = weak_signals.get("sources", [])
         method = weak_signals.get("detection_method", "")
         weak_section = """
-## Schwache Signale
+## Weak Signals
 """
         if sources:
-            weak_section += f"Quellen: {_bullet_list(sources)}\n"
+            weak_section += f"Sources: {_bullet_list(sources)}\n"
         if method:
-            weak_section += f"Erkennungsmethode: {method}\n"
+            weak_section += f"Detection method: {method}\n"
 
     modes_section = _render_operational_modes(operational_modes)
     escalation_section = _render_escalation_protocol(escalation_chains, "s4")
@@ -797,9 +797,9 @@ These are non-negotiable. No agent may do these things, ever.
     if balance_monitoring:
         balance_section = f"""
 ## S3/S4 Balance
-Ziel-Verhältnis: {balance_monitoring.get('s3_vs_s4_target', '60/40')}
-Messung: {balance_monitoring.get('measurement', '?')}
-Alarm wenn: {balance_monitoring.get('alert_if_exceeds', '80/20')}
+Target ratio: {balance_monitoring.get('s3_vs_s4_target', '60/40')}
+Measurement: {balance_monitoring.get('measurement', '?')}
+Alert if: {balance_monitoring.get('alert_if_exceeds', '80/20')}
 """
 
     # ── Algedonic Channel ──
@@ -807,10 +807,10 @@ Alarm wenn: {balance_monitoring.get('alert_if_exceeds', '80/20')}
     if algedonic_channel and algedonic_channel.get("enabled"):
         triggers = _bullet_list(algedonic_channel.get("triggers", []))
         algedonic_section = f"""
-## Algedonischer Kanal
-Jeder Agent kann bei folgenden Ereignissen ein Signal direkt an dich senden:
+## Algedonic Channel
+Any agent may send a signal directly to you on the following events:
 {triggers}
-Dieses Signal umgeht die Hierarchie. Du leitest es SOFORT an den Menschen weiter.
+This signal bypasses the hierarchy. You forward it IMMEDIATELY to the human.
 """
 
     # ── Basta Constraint ──
@@ -818,12 +818,12 @@ Dieses Signal umgeht die Hierarchie. Du leitest es SOFORT an den Menschen weiter
     if basta_constraint:
         examples = _bullet_list(basta_constraint.get("examples", []))
         basta_section = f"""
-## Basta-Vorbehalt
-{basta_constraint.get('description', 'Normative Entscheide bei Unentscheidbarkeit')}
-Folgende Entscheide triffst du NIEMALS selbst:
+## Normative Reserve
+{basta_constraint.get('description', 'Normative decisions on undecidable matters')}
+You NEVER make the following decisions yourself:
 {examples}
-Deine Rolle: Entscheidungsvorlage vorbereiten (Kontext, Optionen, Empfehlung, Dringlichkeit).
-Der Mensch entscheidet. Du setzt um.
+Your role: prepare decision briefs (context, options, recommendation, urgency).
+The human decides. You execute.
 """
 
     modes_section = _render_operational_modes(operational_modes)
