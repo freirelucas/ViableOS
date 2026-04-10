@@ -1,147 +1,147 @@
-# VSM Hybrid: Menschliche Organisation + Agenten-Organisation
+# VSM Hybrid: Human Organization + Agent Organization
 
-## Das Grundprinzip
+## The Fundamental Principle
 
-Eine Organisation, die bereits nach VSM-Prinzipien arbeitet, hat fünf Steuerungsfunktionen (S1-S5), Kommunikationskanäle zwischen ihnen, und Rekursionsebenen. ViableOS baut **keine parallele Organisation**, sondern eine **Schatten-Organisation**, die jede Steuerungsfunktion und jeden Kommunikationskanal der menschlichen Organisation verstärkt.
+An organization that already operates according to VSM principles has five steering functions (S1-S5), communication channels between them, and recursion levels. ViableOS does **not build a parallel organization**, but rather a **shadow organization** that amplifies every steering function and every communication channel of the human organization.
 
-Pfiffner (2019): "Die Linien sind wichtiger als die Kästchen." — Das gilt doppelt für die Agenten-Organisation. Agenten sind nicht primär Ersatz für Rollen, sondern **Verstärker für Kommunikationskanäle**.
+Pfiffner (2019): "The lines are more important than the boxes." — This applies doubly to the agent organization. Agents are not primarily replacements for roles, but **amplifiers for communication channels**.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                    MENSCHLICHE ORG                         │
+│                    HUMAN ORG                               │
 │                                                            │
-│   S5 (Identität)   ←──→   S5-Agent: Policy Guardian       │
+│   S5 (Identity)      ←──→   S5-Agent: Policy Guardian     │
 │        │                                                   │
-│   S4 (Aufklärung)  ←──→   S4-Agent: Intelligence Scout    │
+│   S4 (Intelligence)  ←──→   S4-Agent: Intelligence Scout  │
 │        │                                                   │
-│   ═══ S3/S4 Homöostat ═══  Agent: Balance Monitor          │
+│   ═══ S3/S4 Homeostat ═══  Agent: Balance Monitor          │
 │        │                                                   │
-│   S3 (Optimierung) ←──→   S3-Agent: Operations Optimizer   │
-│   S3* (Audit)      ←──→   S3*-Agent: Independent Auditor   │
+│   S3 (Optimization)  ←──→   S3-Agent: Operations Optimizer │
+│   S3* (Audit)        ←──→   S3*-Agent: Independent Auditor │
 │        │                                                   │
-│   S2 (Koordination)←──→   S2-Agent: Coordination Engine    │
+│   S2 (Coordination)  ←──→   S2-Agent: Coordination Engine  │
 │        │                                                   │
-│   S1a ──── S1b ──── S1c   Je ein S1-Agent pro Einheit      │
+│   S1a ──── S1b ──── S1c   One S1-Agent per unit            │
 │                                                            │
 └──────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Die sechs Kommunikationskanäle und ihre Agenten-Verstärkung
+## The Six Communication Channels and Their Agent Amplification
 
-Pfiffner identifiziert folgende Kanäle. Für jeden definieren wir, wie ein Agent ihn verstärkt — unter Beachtung der drei Anforderungen: **Kanalkapazität**, **Transduktion** (Verständlichkeit), und **Zeitgerechtigkeit** (Synchronizität).
+Pfiffner identifies the following channels. For each one, we define how an agent amplifies it — considering the three requirements: **channel capacity**, **transduction** (comprehensibility), and **timeliness** (synchronicity).
 
-### Kanal 1: S2 ↔ S1 (Koordination & Stabilisierung)
+### Channel 1: S2 ↔ S1 (Coordination & Stabilization)
 
-**Menschlich:** Koordinationsgremien, Shared Services, Standards, Foren.
-**Agent-Verstärkung:**
+**Human:** Coordination committees, shared services, standards, forums.
+**Agent amplification:**
 
-| Aufgabe | Menschlich | Agent |
-|---------|-----------|-------|
-| Konflikterkennung | Jemand merkt's im Meeting | Agent monitort Ressourcen-Überlappungen in Echtzeit |
-| Fluktuationsdämpfung | Policies, Standards-Dokumente | Agent prüft automatisch gegen Standards bei jeder Änderung |
-| Koordination | Koordinator ruft Beteiligte zusammen | Agent erkennt Koordinationsbedarf und schlägt Lösung vor, bevor der Mensch es merkt |
-| Support | Shared Service Center | Agent beantwortet Routine-Anfragen, eskaliert Ausnahmen |
+| Task | Human | Agent |
+|------|-------|-------|
+| Conflict detection | Someone notices it in the meeting | Agent monitors resource overlaps in real-time |
+| Fluctuation dampening | Policies, standards documents | Agent automatically checks against standards on every change |
+| Coordination | Coordinator assembles stakeholders | Agent detects coordination needs and proposes solutions before the human notices |
+| Support | Shared service center | Agent answers routine inquiries, escalates exceptions |
 
-**Kanal-Design:**
-- Kapazität: Agent kann unbegrenzt viele Koordinations-Events parallel verarbeiten → **Variety-Verstärker**
-- Transduktion: Agent übersetzt zwischen Fachsprachen der S1-Einheiten ("Was die Abrechnung als Leistungsnachweis braucht, ist das was die Planung als Wochenplan ausgibt")
-- Synchronizität: **Echtzeit** statt "beim nächsten Meeting"
+**Channel design:**
+- Capacity: Agent can process unlimited coordination events in parallel → **variety amplifier**
+- Transduction: Agent translates between domain languages of S1-units ("What billing needs as proof of service is what planning outputs as a weekly schedule")
+- Synchronicity: **Real-time** instead of "at the next meeting"
 
-### Kanal 2: S3 ↔ S1 — Resource Bargain & Accountability (links)
+### Channel 2: S3 ↔ S1 — Resource Bargain & Accountability (left)
 
-**Menschlich:** Jahresplanung, Budgets, Zielvereinbarungen, Reporting-Zyklen.
-**Agent-Verstärkung:**
+**Human:** Annual planning, budgets, target agreements, reporting cycles.
+**Agent amplification:**
 
-| Aufgabe | Menschlich | Agent |
-|---------|-----------|-------|
-| Operative Planung | S1-Leiter erstellt Plan, S3 konsolidiert | Agent konsolidiert Pläne automatisch, zeigt Widersprüche und Synergien |
-| Reporting | Monatsbericht, Quartals-Review | Agent trackt KPIs kontinuierlich, meldet nur *Abweichungen* (nicht "alles ist normal") |
-| Ressourcen-Verhandlung | Budget-Meetings | Agent simuliert Ressourcen-Szenarien vor dem Meeting |
-| Vollzugsmeldung | Mitarbeiter meldet Abschluss | Agent schließt den Regelkreis automatisch: Auftrag → Quittung → Vollzug → Bestätigung |
+| Task | Human | Agent |
+|------|-------|-------|
+| Operational planning | S1-leader creates plan, S3 consolidates | Agent consolidates plans automatically, shows contradictions and synergies |
+| Reporting | Monthly report, quarterly review | Agent tracks KPIs continuously, reports only *deviations* (not "everything is normal") |
+| Resource negotiation | Budget meetings | Agent simulates resource scenarios before the meeting |
+| Completion report | Employee reports completion | Agent closes the control loop automatically: order → acknowledgment → execution → confirmation |
 
-**Pfiffner-Prinzip angewandt:** "Nur wenn wir die Antwort gehört haben, wissen wir was wir gesagt haben." → Jeder Auftrag an eine S1-Einheit bekommt automatisch eine Auftragsquittung und Vollzugsmeldung durch den Agenten.
+**Pfiffner principle applied:** "Only when we have heard the answer do we know what we said." → Every order to an S1-unit automatically receives an order acknowledgment and completion report through the agent.
 
-### Kanal 3: S3 → S1 — Corporate Intervention (rechts)
+### Channel 3: S3 → S1 — Corporate Intervention (right)
 
-**Menschlich:** Bindende Vorgaben, Compliance, Notfall-Kommando.
-**Agent-Verstärkung:**
+**Human:** Binding directives, compliance, emergency command.
+**Agent amplification:**
 
-| Aufgabe | Menschlich | Agent |
-|---------|-----------|-------|
-| Compliance-Monitoring | Compliance-Abteilung prüft stichprobenartig | Agent prüft **jede** Aktion gegen Compliance-Regeln |
-| Notfall-Eskalation | Krisenstab wird einberufen | Agent erkennt Krisen-Muster und eskaliert sofort, wechselt in Krisenmodus |
-| Autonomie-Einschränkung | Geschäftsleitung greift ein | Agent kann Autonomie-Level einer S1-Einheit automatisch einschränken nach vordefinierten Regeln |
+| Task | Human | Agent |
+|------|-------|-------|
+| Compliance monitoring | Compliance department checks randomly | Agent checks **every** action against compliance rules |
+| Emergency escalation | Crisis team is convened | Agent detects crisis patterns and escalates immediately, switches to crisis mode |
+| Autonomy restriction | Executive management intervenes | Agent can automatically restrict autonomy level of an S1-unit according to predefined rules |
 
-**Wichtig:** Dies ist der einzige Kanal, auf dem S3 die Autonomie der S1-Einheiten einschränken darf. Der Agent muss dies **protokollieren und begründen**.
+**Important:** This is the only channel on which S3 may restrict the autonomy of S1-units. The agent must **log and justify** this.
 
-### Kanal 4: S3* ↔ S1 — Audit & Real-Life Information
+### Channel 4: S3* ↔ S1 — Audit & Real-Life Information
 
-**Menschlich:** Mystery Shopping, Management-Besuche, Stichproben, unabhängige Prüfungen.
-**Agent-Verstärkung:**
+**Human:** Mystery shopping, management visits, spot checks, independent audits.
+**Agent amplification:**
 
-| Aufgabe | Menschlich | Agent |
-|---------|-----------|-------|
-| Unabhängige Prüfung | Auditor prüft Ergebnis | **Anderer LLM-Provider** prüft Output der S1-Agenten |
-| Real-Life Information | Geschäftsleiter geht in die Produktion | Agent analysiert Rohdaten statt Management-Reports |
-| Plausibilitäts-Check | Erfahrener Mitarbeiter schaut drüber | Agent vergleicht gemeldete vs. tatsächliche Werte |
+| Task | Human | Agent |
+|------|-------|-------|
+| Independent audit | Auditor reviews results | **Different LLM provider** reviews output of S1-agents |
+| Real-life information | Executive goes to the production floor | Agent analyzes raw data instead of management reports |
+| Plausibility check | Experienced employee looks it over | Agent compares reported vs. actual values |
 
-**Pfiffner-Kernprinzip für S3*:** "Die operative Einheit berichtet das, wovon sie glaubt, dass das Management es hören will." → S3*-Agent MUSS einen anderen Provider/Modell nutzen als die S1-Agenten. Fehler dürfen nicht korrelieren.
+**Pfiffner core principle for S3*:** "The operational unit reports what it believes management wants to hear." → The S3*-agent MUST use a different provider/model than the S1-agents. Errors must not correlate.
 
-### Kanal 5: S4 ↔ Umwelt + S4 ↔ S3
+### Channel 5: S4 ↔ Environment + S4 ↔ S3
 
-**Menschlich:** Marktbeobachtung, R&D, Strategie-Klausuren, Wettbewerbsanalysen.
-**Agent-Verstärkung:**
+**Human:** Market observation, R&D, strategy retreats, competitive analyses.
+**Agent amplification:**
 
-| Aufgabe | Menschlich | Agent |
-|---------|-----------|-------|
-| Bekannte Umwelt | Branchenreports lesen | Agent monitort Quellen kontinuierlich, filtert Relevantes |
-| Unbekannte Umwelt | Innovationsmanager sucht neue Trends | Agent durchforstet ungewöhnliche Quellen, erkennt schwache Signale |
-| Strategische Leitplanken → S3 | Strategie-Workshop definiert Rahmen | Agent überwacht ob operative Planung strategische Leitplanken respektiert |
-| S3 → S4 Rückmeldung | Quartalsbericht über Strategie-Umsetzung | Agent trackt Strategie-Meilensteine automatisch |
+| Task | Human | Agent |
+|------|-------|-------|
+| Known environment | Reading industry reports | Agent monitors sources continuously, filters what is relevant |
+| Unknown environment | Innovation manager looks for new trends | Agent searches unusual sources, detects weak signals |
+| Strategic guardrails → S3 | Strategy workshop defines framework | Agent monitors whether operational planning respects strategic guardrails |
+| S3 → S4 Feedback | Quarterly report on strategy execution | Agent tracks strategy milestones automatically |
 
-**Pfiffner-Beispiel angewandt:** Der Konzern, bei dem die Budgetplanung (September) VOR der Strategieplanung (November) stattfand → Strategie floss nie in operative Planung ein. Ein Agent kann diese Asynchronizität erkennen und warnen: "Eure S3-Planung ignoriert die S4-Ergebnisse weil der Timing-Kanal kaputt ist."
+**Pfiffner example applied:** The corporation where budget planning (September) took place BEFORE strategy planning (November) → Strategy never flowed into operational planning. An agent can detect this asynchronicity and warn: "Your S3-planning ignores the S4-results because the timing channel is broken."
 
-### Kanal 6: S5 ↔ S3/S4 Homöostat + Algedonisches Signal
+### Channel 6: S5 ↔ S3/S4 Homeostat + Algedonic Signal
 
-**Menschlich:** Aufsichtsrat, Verwaltungsrat, Beirat, Eigentümer-Entscheide.
-**Agent-Verstärkung:**
+**Human:** Supervisory board, board of directors, advisory board, owner decisions.
+**Agent amplification:**
 
-| Aufgabe | Menschlich | Agent |
-|---------|-----------|-------|
-| S3/S4-Balance überwachen | Board-Meeting alle 3 Monate | Agent misst kontinuierlich die Balance: "Wie viel % der Management-Aufmerksamkeit geht in S3 vs. S4?" |
-| Normative Leitplanken | Unternehmenspolitik-Dokument | Agent prüft jede Entscheidung gegen die Policy |
-| "Basta"-Funktion | Eigentümer entscheidet | Agent **kann dies NICHT** — Mensch-Vorbehalt |
-| Algedonisches Signal | Ombudsstelle, Mitarbeiter-Vertretung | Agent bietet einen zusätzlichen Algedonik-Kanal, der alle Rekursionsebenen durchdringt |
+| Task | Human | Agent |
+|------|-------|-------|
+| S3/S4-Balance monitoring | Board meeting every 3 months | Agent continuously measures the balance: "What % of management attention goes to S3 vs. S4?" |
+| Normative guardrails | Corporate policy document | Agent checks every decision against the policy |
+| Normative reserve ("Basta" function) | Owner decides | Agent **CANNOT do this** — human reserve |
+| Algedonic signal | Ombudsman office, employee representation | Agent provides an additional algedonic channel that penetrates all recursion levels |
 
 ---
 
-## Gremien / Direktorien im Hybrid-Modell
+## Committees / Directorates in the Hybrid Model
 
-Pfiffner beschreibt fünf "Direktorate" — Entscheidungsgremien für jede Steuerungsfunktion. Jedes Gremium bekommt einen Agenten-Spiegel:
+Pfiffner describes five "directorates" — decision-making bodies for each steering function. Each committee gets an agent mirror:
 
 ### Coordination Directorate (S2)
 
 ```
 ┌─────────────────────────────────────────────┐
-│          KOORDINATIONS-GREMIUM               │
+│          COORDINATION COMMITTEE              │
 │                                              │
-│  Menschlich:                                 │
-│  - Koordinator/in                            │
-│  - Vertreter der S1-Einheiten                │
-│  - Shared Service Leiter                     │
+│  Human:                                      │
+│  - Coordinator                               │
+│  - Representatives of S1-units               │
+│  - Shared service leaders                    │
 │                                              │
 │  Agent:                                      │
 │  - S2-Coordination-Agent                     │
-│    → Bereitet Agenda vor (erkannte Konflikte)│
-│    → Protokolliert Entscheide                │
-│    → Überwacht Umsetzung der Entscheide      │
-│    → Erkennt neuen Koordinationsbedarf       │
+│    → Prepares agenda (detected conflicts)    │
+│    → Records decisions                       │
+│    → Monitors implementation of decisions    │
+│    → Detects new coordination needs          │
 │                                              │
-│  Rhythmus: Wöchentlich + on-demand           │
-│  Modus: Agent arbeitet zwischen den Meetings │
-│          und eskaliert nur bei Bedarf         │
+│  Rhythm: Weekly + on-demand                  │
+│  Mode: Agent works between meetings          │
+│         and escalates only when needed        │
 └─────────────────────────────────────────────┘
 ```
 
@@ -149,25 +149,25 @@ Pfiffner beschreibt fünf "Direktorate" — Entscheidungsgremien für jede Steue
 
 ```
 ┌─────────────────────────────────────────────┐
-│          OPERATIONS-GREMIUM                  │
+│          OPERATIONS COMMITTEE                │
 │                                              │
-│  Menschlich:                                 │
-│  - COO / Geschäftsleiter                     │
-│  - S1-Einheitsleiter                         │
-│  - Finanz- / Controlling-Verantwortliche     │
+│  Human:                                      │
+│  - COO / Managing Director                   │
+│  - S1-unit leaders                           │
+│  - Finance / Controlling managers            │
 │                                              │
 │  Agent:                                      │
 │  - S3-Operations-Agent                       │
-│    → Konsolidiert KPIs aller S1-Einheiten    │
-│    → Erkennt Synergien zwischen Einheiten    │
-│    → Simuliert Ressourcen-Umverteilungen      │
-│    → Bereitet Entscheidungsvorlagen vor      │
-│    → Trackt Vollzugsmeldungen                │
+│    → Consolidates KPIs of all S1-units       │
+│    → Detects synergies between units         │
+│    → Simulates resource reallocations        │
+│    → Prepares decision proposals             │
+│    → Tracks completion reports               │
 │                                              │
-│  Rhythmus: Monatlich (Review) + kontinuierlich│
-│  Triple-Index (Beer):                        │
+│  Rhythm: Monthly (review) + continuous       │
+│  Triple Index (Beer):                        │
 │  - Actuality / Capability / Potentiality     │
-│  - Agent berechnet alle drei kontinuierlich  │
+│  - Agent calculates all three continuously   │
 └─────────────────────────────────────────────┘
 ```
 
@@ -175,25 +175,25 @@ Pfiffner beschreibt fünf "Direktorate" — Entscheidungsgremien für jede Steue
 
 ```
 ┌─────────────────────────────────────────────┐
-│          AUDIT-GREMIUM                       │
+│          AUDIT COMMITTEE                     │
 │                                              │
-│  Menschlich:                                 │
-│  - Unabhängige/r Prüfer/in                   │
-│  - Quality Manager                           │
-│  - Compliance Officer                        │
+│  Human:                                      │
+│  - Independent auditor                       │
+│  - Quality manager                           │
+│  - Compliance officer                        │
 │                                              │
 │  Agent:                                      │
-│  - S3*-Audit-Agent (ANDERER LLM-Provider!)   │
-│    → Prüft Outputs der S1-Agenten            │
-│    → Vergleicht gemeldete vs. Rohdaten       │
-│    → Plausibilitätschecks                    │
-│    → Compliance-Checks                       │
-│    → Meldet an Operations Directorate        │
+│  - S3*-Audit-Agent (DIFFERENT LLM provider!) │
+│    → Reviews outputs of S1-agents            │
+│    → Compares reported vs. raw data          │
+│    → Plausibility checks                     │
+│    → Compliance checks                       │
+│    → Reports to Operations Directorate       │
 │                                              │
-│  Rhythmus: Kontinuierlich (Agent) +          │
-│            Quartalsweise (Mensch-Gremium)     │
+│  Rhythm: Continuous (agent) +                │
+│           Quarterly (human committee)         │
 │                                              │
-│  KRITISCH: Agent ≠ gleicher Provider wie S1  │
+│  CRITICAL: Agent ≠ same provider as S1       │
 └─────────────────────────────────────────────┘
 ```
 
@@ -201,29 +201,29 @@ Pfiffner beschreibt fünf "Direktorate" — Entscheidungsgremien für jede Steue
 
 ```
 ┌─────────────────────────────────────────────┐
-│          ENTWICKLUNGS-GREMIUM                │
+│          DEVELOPMENT COMMITTEE               │
 │                                              │
-│  Menschlich:                                 │
-│  - CEO / Strategie-Verantwortliche/r         │
-│  - Innovationsmanager/in                     │
-│  - Markt- / Wettbewerbsanalyst/in            │
+│  Human:                                      │
+│  - CEO / Strategy lead                       │
+│  - Innovation manager                        │
+│  - Market / Competitive analyst              │
 │                                              │
 │  Agent:                                      │
 │  - S4-Intelligence-Agent                     │
-│    → Monitort Umwelt kontinuierlich          │
-│    → Erkennt schwache Signale                │
-│    → Prüft Strategie-Prämissen automatisch   │
-│    → Triggert Alarm wenn Prämisse kippt      │
-│    → Liefert Briefings für Klausuren         │
+│    → Monitors environment continuously       │
+│    → Detects weak signals                    │
+│    → Checks strategy premises automatically  │
+│    → Triggers alarm when premise shifts      │
+│    → Delivers briefings for retreats         │
 │                                              │
-│  Rhythmus: Quartalsweise (Strategie-Review) +│
-│            Jährlich (Team Syntegrity)         │
+│  Rhythm: Quarterly (strategy review) +       │
+│           Annually (Team Syntegrity)          │
 │  Agent: 24/7 Radar                           │
 │                                              │
-│  Für große Fragen: Team Syntegrity (30 Pers.)│
-│  → Agent kann NICHT ersetzen, aber:          │
-│  → Agent bereitet Daten-Basis vor            │
-│  → Agent dokumentiert und trackt Ergebnisse  │
+│  For big questions: Team Syntegrity (30 ppl.)│
+│  → Agent CANNOT replace, but:               │
+│  → Agent prepares data foundation            │
+│  → Agent documents and tracks results        │
 └─────────────────────────────────────────────┘
 ```
 
@@ -231,125 +231,125 @@ Pfiffner beschreibt fünf "Direktorate" — Entscheidungsgremien für jede Steue
 
 ```
 ┌─────────────────────────────────────────────┐
-│          IDENTITÄTS-GREMIUM                  │
+│          IDENTITY COMMITTEE                  │
 │                                              │
-│  Menschlich:                                 │
-│  - Eigentümer / Aufsichtsrat                 │
-│  - Verwaltungsrat / Beirat                   │
-│  - Mitarbeitervertretung                     │
+│  Human:                                      │
+│  - Owner / Supervisory board                 │
+│  - Board of directors / Advisory board       │
+│  - Employee representation                   │
 │                                              │
 │  Agent:                                      │
 │  - S5-Policy-Guardian-Agent                  │
-│    → Überwacht S3/S4-Balance                 │
-│    → Warnt wenn Balance kippt                │
-│    → Prüft Entscheide gegen Policy           │
-│    → Kann NICHT "Basta" sagen (Mensch-only)  │
-│    → Pflegt den Algedonik-Kanal              │
+│    → Monitors S3/S4-Balance                  │
+│    → Warns when balance shifts               │
+│    → Checks decisions against policy         │
+│    → CANNOT say "Basta" (human-only)         │
+│    → Maintains the algedonic channel         │
 │                                              │
-│  Rhythmus: Jährlich (Strategie-Genehmigung) +│
-│            Quartalsweise (Board-Meeting)      │
-│  Agent: Kontinuierlich wachend               │
+│  Rhythm: Annually (strategy approval) +      │
+│           Quarterly (board meeting)           │
+│  Agent: Continuously vigilant                │
 │                                              │
-│  Algedonisches Signal:                       │
-│  → Jeder Mitarbeiter kann über Agent-Kanal   │
-│    ein Signal senden das alle Ebenen          │
-│    durchdringt bis zum Identity Directorate   │
+│  Algedonic signal:                           │
+│  → Any employee can send a signal via        │
+│    the agent channel that penetrates all      │
+│    levels up to the Identity Directorate      │
 └─────────────────────────────────────────────┘
 ```
 
 ---
 
-## Drei Betriebsmodi (nach Pfiffner)
+## Three Operating Modes (according to Pfiffner)
 
-Die gesamte Agenten-Organisation muss zwischen Modi umschalten können:
+The entire agent organization must be able to switch between modes:
 
-| Modus | Menschliche Org | Agenten-Org |
-|-------|----------------|-------------|
-| **Normal** | Standard-Rhythmen, volle Autonomie der S1-Einheiten | Agenten arbeiten unterstützend, beobachtend, vorbereitend |
-| **Erhöhte Aktivität** | Kürzere Antwortzeiten, häufigere Meetings | Agenten erhöhen Monitoring-Frequenz, verkürzen Eskalations-Schwellen, aktivieren zusätzliche Prüfungen |
-| **Krise** | Alle sofort erreichbar, zentrale Steuerung, Autonomie eingeschränkt | Agenten wechseln in Echtzeit-Modus, S3-Agent kann S1-Autonomie einschränken (nach Mensch-Freigabe), alle Regelkreise werden geschlossen, Vollzugsmeldungen werden Pflicht |
+| Mode | Human Org | Agent Org |
+|------|-----------|-----------|
+| **Normal** | Standard rhythms, full autonomy of S1-units | Agents work in support, observation, and preparation mode |
+| **Heightened Activity** | Shorter response times, more frequent meetings | Agents increase monitoring frequency, shorten escalation thresholds, activate additional checks |
+| **Crisis** | Everyone immediately reachable, centralized control, autonomy restricted | Agents switch to real-time mode, S3-agent can restrict S1-autonomy (after human approval), all control loops are closed, completion reports become mandatory |
 
-**Design-Prinzip:** Die Agenten-Organisation ist nicht nur für den Normalzustand optimiert, sondern muss **sofort** in einen höheren Modus wechseln können. Der Umschaltmechanismus selbst muss getestet und geübt werden.
+**Design principle:** The agent organization is not optimized only for normal operations, but must be able to switch **immediately** to a higher mode. The switching mechanism itself must be tested and practiced.
 
 ---
 
-## Rekursion: Agenten in verschachtelten Ebenen
+## Recursion: Agents in Nested Levels
 
-Pfiffner: "In jeder operativen Einheit findet sich die gleiche Steuerungsstruktur mit den gleichen 5 Elementen und den gleichen Kommunikationskanälen."
+Pfiffner: "In every operational unit the same control structure with the same 5 elements and the same communication channels can be found."
 
 ```
-Konzern (R0)
-├── S1: Division A (R1) ← eigene Agenten-Org mit S2-S5
-│   ├── S1: Team A1 (R2) ← eigene Agenten-Org mit S2-S5
-│   └── S1: Team A2 (R2) ← eigene Agenten-Org mit S2-S5
-├── S1: Division B (R1) ← eigene Agenten-Org mit S2-S5
-└── S1: Division C (R1) ← eigene Agenten-Org mit S2-S5
+Corporation (R0)
+├── S1: Division A (R1) ← own agent org with S2-S5
+│   ├── S1: Team A1 (R2) ← own agent org with S2-S5
+│   └── S1: Team A2 (R2) ← own agent org with S2-S5
+├── S1: Division B (R1) ← own agent org with S2-S5
+└── S1: Division C (R1) ← own agent org with S2-S5
 ```
 
-**Vertikale Verknüpfung der Agenten:**
-- S3-Agent von R0 kommuniziert mit S3-Agenten von R1 → Plankonsolidierung
-- S4-Agent von R0 kommuniziert mit S4-Agenten von R1 → Strategische Kohärenz
-- S5-Agent von R0 setzt Rahmen für S5-Agenten von R1 → Policy-Kaskade
+**Vertical linking of agents:**
+- S3-Agent of R0 communicates with S3-Agents of R1 → plan consolidation
+- S4-Agent of R0 communicates with S4-Agents of R1 → strategic coherence
+- S5-Agent of R0 sets framework for S5-Agents of R1 → policy cascade
 
-**Personalunion (Pfiffner):** In der menschlichen Org sitzt der Divisionsleiter gleichzeitig in der GL (R0) und führt die Division (R1). Der Agent kann diese Personalunion **nicht** ersetzen, aber er kann sicherstellen, dass die Information zwischen den Ebenen konsistent fließt.
-
----
-
-## Der digitale Operations Room
-
-Pfiffner's vier Wände, übersetzt in ViableOS:
-
-### Wand 1: Information & Alarm
-- **Echtzeit-KPIs** aller S1-Einheiten, aufbereitet als Muster und Trends (nicht Rohdaten)
-- **Intelligente Filter:** Nicht Durchschnitte, sondern Stufen- und Trendänderungen
-- **Triple Index:** Actuality / Capability / Potentiality pro Einheit
-- **Algedonische Signale:** Unerwartetes hervorheben — sowohl unerwartet Gutes als auch Schlechtes
-- Agent-Rolle: S3-Agent kuratiert diese Wand kontinuierlich
-
-### Wand 2: Memory (Modell seiner selbst)
-- **VSM-Struktur** als Ordnungsrahmen: Alles nach Rekursionsebene und System 2-5 eingeordnet
-- **Maßnahmen-Tracking:** Entschiedene Projekte, Aktionen, Issues — Status, Verantwortliche
-- **Strategisches Controlling:** Prämissen, Ziele, Abstand zum Erfolg
-- Agent-Rolle: Agent pflegt dieses Gedächtnis automatisch. Nichts geht verloren.
-
-### Wand 3: Planning & Simulation (Modell der Umwelt)
-- **Umwelt-Modell** mit Wechselwirkungen (nicht nur einzelne Trends)
-- **Szenario-Simulation:** Was passiert wenn Trend X sich verstärkt?
-- **Strategischer Radar:** Prämissen werden kontinuierlich geprüft → Alarm wenn eine kippt
-- Agent-Rolle: S4-Agent aktualisiert das Modell und triggert Strategie-Reviews
-
-### Wand 4: Attention Focus
-- **Flexible Arbeitsfläche** für aktuelle Diskussion
-- Agenten können hier Briefings, Analysen, Visualisierungen bereitstellen
-- Agent-Rolle: Assistenz auf Abruf
+**Personal union (Pfiffner):** In the human org, the division leader simultaneously sits on the executive board (R0) and leads the division (R1). The agent cannot **replace** this personal union, but it can ensure that information flows consistently between levels.
 
 ---
 
-## Was Agenten NICHT können (Mensch-Vorbehalte)
+## The Digital Operations Room
 
-| Funktion | Warum Mensch | Agent-Rolle stattdessen |
-|----------|-------------|------------------------|
-| S5 "Basta"-Entscheid | Normative Entscheidung unter Unentscheidbarkeit — braucht Legitimation und Autorität | Entscheidungsvorlage vorbereiten, Konsequenzen simulieren |
-| Team Syntegrity | 30 Menschen in 4 Tagen, Kreativität durch Begegnung, Willensbildung | Daten-Basis vorbereiten, Ergebnisse dokumentieren und tracken |
-| Personalunion über Rekursionsebenen | Mensch sitzt in zwei Gremien und verbindet sie "ad personam" | Informationskonsistenz zwischen Ebenen sicherstellen |
-| Algedonisches Signal interpretieren | Braucht Urteilsvermögen, Empathie, Kontext | Signal transportieren, nicht interpretieren |
-| Vertrauen und Legitimation | Entscheide müssen von Menschen getragen werden | Transparenz und Nachvollziehbarkeit herstellen |
+Pfiffner's four walls, translated into ViableOS:
+
+### Wall 1: Information & Alarm
+- **Real-time KPIs** of all S1-units, presented as patterns and trends (not raw data)
+- **Intelligent filters:** Not averages, but step changes and trend shifts
+- **Triple Index:** Actuality / Capability / Potentiality per unit
+- **Algedonic signals:** Highlight the unexpected — both unexpectedly good and bad
+- Agent role: S3-Agent curates this wall continuously
+
+### Wall 2: Memory (Model of Itself)
+- **VSM structure** as organizing framework: Everything categorized by recursion level and System 2-5
+- **Action tracking:** Decided projects, actions, issues — status, responsible parties
+- **Strategic controlling:** Premises, goals, distance to success
+- Agent role: Agent maintains this memory automatically. Nothing gets lost.
+
+### Wall 3: Planning & Simulation (Model of the Environment)
+- **Environment model** with interactions (not just individual trends)
+- **Scenario simulation:** What happens if trend X intensifies?
+- **Strategic radar:** Premises are continuously checked → alarm when one shifts
+- Agent role: S4-Agent updates the model and triggers strategy reviews
+
+### Wall 4: Attention Focus
+- **Flexible workspace** for current discussion
+- Agents can provide briefings, analyses, visualizations here
+- Agent role: Assistance on demand
 
 ---
 
-## Implementierungs-Empfehlung für ViableOS
+## What Agents CANNOT Do (Human Reserves)
 
-### Phase 1: S2 + S3 (Koordination + Optimierung)
-Start mit den Kanälen die am meisten operative Last tragen. Koordinations-Agent und Operations-Agent. Sofortiger Mehrwert: Konflikterkennung, KPI-Tracking, Vollzugsmeldungen.
+| Function | Why Human | Agent Role Instead |
+|----------|-----------|-------------------|
+| S5 normative reserve decision | Normative decision under undecidability — requires legitimacy and authority | Prepare decision proposals, simulate consequences |
+| Team Syntegrity | 30 people in 4 days, creativity through encounter, collective will formation | Prepare data foundation, document and track results |
+| Personal union across recursion levels | Human sits in two committees and connects them "ad personam" | Ensure information consistency between levels |
+| Interpreting algedonic signals | Requires judgment, empathy, context | Transport the signal, do not interpret it |
+| Trust and legitimacy | Decisions must be carried by humans | Create transparency and traceability |
+
+---
+
+## Implementation Recommendation for ViableOS
+
+### Phase 1: S2 + S3 (Coordination + Optimization)
+Start with the channels that carry the most operational load. Coordination agent and operations agent. Immediate value: conflict detection, KPI tracking, completion reports.
 
 ### Phase 2: S3* (Audit)
-Audit-Agent mit bewusst anderem LLM-Provider. Prüft Outputs der Phase-1-Agenten.
+Audit agent with deliberately different LLM provider. Reviews outputs of Phase 1 agents.
 
 ### Phase 3: S4 (Intelligence)
-Umwelt-Monitoring-Agent. Braucht weniger Integration mit Tagesgeschäft, kann parallel aufgebaut werden.
+Environment monitoring agent. Requires less integration with day-to-day business, can be built in parallel.
 
 ### Phase 4: S5 + Operations Room
-Policy-Guardian und die vier Wände des digitalen Operations Room. Braucht die meiste organisatorische Reife.
+Policy guardian and the four walls of the digital operations room. Requires the most organizational maturity.
 
-### Querschnitt: Algedonisches Signal
-Von Anfang an einen Kanal implementieren, der alle Rekursionsebenen durchdringen kann. Dies ist der einzige Kanal der "vertikal alles durchstößt" (Pfiffner).
+### Cross-cutting: Algedonic Signal
+From the very beginning, implement a channel that can penetrate all recursion levels. This is the only channel that "vertically pierces through everything" (Pfiffner).
