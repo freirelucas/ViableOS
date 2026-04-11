@@ -226,9 +226,7 @@ def {sys_name}(state: AgentState) -> dict:
     s1_nodes_list = ", ".join(f'"{n}"' for n in all_node_names if n.startswith("s1_"))
 
     approval_items = ", ".join(f'"{a}"' for a in approval_required) if approval_required else ""
-    approval_check = f"""
-    APPROVAL_REQUIRED = [{approval_items}]
-""" if approval_required else ""
+    approval_check = f"\nAPPROVAL_REQUIRED = [{approval_items}]\n" if approval_required else ""
 
     return f'''"""ViableOS LangGraph deployment — {system_name}
 
@@ -390,6 +388,9 @@ def generate_langgraph_package(
     shared_resources = vs.get("shared_resources", [])
     domain_flow = vs.get("domain_flow")
     success_criteria = vs.get("success_criteria", [])
+    operational_modes = vs.get("operational_modes")
+    escalation_chains = vs.get("escalation_chains")
+    vollzug_protocol = vs.get("vollzug_protocol")
 
     # Generate coordination rules
     auto_rules = generate_base_rules(s1_units)
@@ -424,6 +425,9 @@ def generate_langgraph_package(
         soul = generate_s1_soul(
             unit, identity, coord_rules, hitl, other_units,
             dependencies=dependencies, domain_flow=domain_flow,
+            operational_modes=operational_modes,
+            escalation_chains=escalation_chains,
+            vollzug_protocol=vollzug_protocol,
         )
         (agent_dir / "system_prompt.md").write_text(soul)
 
@@ -431,9 +435,14 @@ def generate_langgraph_package(
     s2_dir = agents_dir / "s2_coordinator"
     s2_dir.mkdir()
     s2_label = vs.get("system_2", {}).get("label", "")
+    s2_cfg = vs.get("system_2", {})
     soul = generate_s2_soul(
         coord_rules, s1_names, identity,
         shared_resources=shared_resources, domain_flow=domain_flow, label=s2_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        conflict_detection=s2_cfg.get("conflict_detection"),
+        transduction_mappings=s2_cfg.get("transduction_mappings"),
     )
     (s2_dir / "system_prompt.md").write_text(soul)
 
@@ -447,6 +456,12 @@ def generate_langgraph_package(
         kpi_list=s3_cfg.get("kpi_list"),
         success_criteria=success_criteria if success_criteria else None,
         label=s3_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        triple_index=s3_cfg.get("triple_index"),
+        deviation_logic=s3_cfg.get("deviation_logic"),
+        intervention_authority=s3_cfg.get("intervention_authority"),
+        decision_principles=s3_cfg.get("decision_principles"),
     )
     (s3_dir / "system_prompt.md").write_text(soul)
 
@@ -456,20 +471,38 @@ def generate_langgraph_package(
     s3star_label = s3star_cfg.get("label", "")
     checks = s3star_cfg.get("checks", [])
     on_failure = s3star_cfg.get("on_failure", "Escalate to human immediately")
-    soul = generate_s3star_soul(identity, checks, s1_names, on_failure, label=s3star_label)
+    soul = generate_s3star_soul(
+        identity, checks, s1_names, on_failure, label=s3star_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        provider_constraint=s3star_cfg.get("provider_constraint"),
+        reporting_target=s3star_cfg.get("reporting_target"),
+        independence_rules=s3star_cfg.get("independence_rules"),
+    )
     (s3star_dir / "system_prompt.md").write_text(soul)
 
     # S4 Scout
     s4_dir = agents_dir / "s4_scout"
     s4_dir.mkdir()
     s4_label = s4_cfg.get("label", "")
-    soul = generate_s4_soul(identity, monitoring, label=s4_label)
+    soul = generate_s4_soul(
+        identity, monitoring, label=s4_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        premises_register=s4_cfg.get("premises_register"),
+        strategy_bridge=s4_cfg.get("strategy_bridge"),
+        weak_signals=s4_cfg.get("weak_signals"),
+    )
     (s4_dir / "system_prompt.md").write_text(soul)
 
     # S5 Policy Guardian
     s5_dir = agents_dir / "s5_policy"
     s5_dir.mkdir()
-    soul = generate_s5_soul(identity, hitl)
+    soul = generate_s5_soul(
+        identity, hitl,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+    )
     (s5_dir / "system_prompt.md").write_text(soul)
 
     # ── Shared resources ───────────────────────────────────────
