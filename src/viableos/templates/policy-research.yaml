@@ -204,6 +204,13 @@ viable_system:
   system_3:
     reporting_rhythm: "weekly"
     resource_allocation: "Monitoring: 25%, Bibliographic Research: 25%, Text Production: 30%, Data & Evidence: 20%"
+    decision_principles:
+      - "Rigor > velocity — never sacrifice methodological soundness for speed"
+      - "Evidence > opinion — decisions must be grounded in data and literature"
+      - "Institutional capacity is dynamic — monitor (de)mobilization of state capabilities"
+      - "Integration > fragmentation — policy instruments create networks, assess them holistically"
+      - "Transparency and privacy in balance — neither trumps the other unconditionally"
+      - "When unclear: escalate to researcher rather than guess"
     kpi_list:
       - "Monitoring alerts generated vs. relevant (precision rate)"
       - "Literature reviews completed per research cycle"

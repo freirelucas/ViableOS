@@ -411,6 +411,7 @@ def generate_s3_soul(
     triple_index: dict[str, Any] | None = None,
     deviation_logic: dict[str, Any] | None = None,
     intervention_authority: dict[str, Any] | None = None,
+    decision_principles: list[str] | None = None,
 ) -> str:
     display_name = label or "Optimizer"
     sys_purpose = identity.get("purpose", "")
@@ -472,6 +473,14 @@ Maximum duration without human confirmation: {max_dur}.
     modes_section = _render_operational_modes(operational_modes)
     escalation_section = _render_escalation_protocol(escalation_chains, "s3")
 
+    _default_principles = [
+        "Customer value > internal efficiency",
+        "Shipping > perfection",
+        "Data > opinions",
+        "When unclear: decide fast, correct later",
+    ]
+    principles_list = _bullet_list(decision_principles or _default_principles)
+
     return f"""# {display_name}
 
 ## Identity refresh
@@ -514,10 +523,7 @@ produces maximum value with available resources.
 - Monitor agent health: looping, excessive token usage, degraded output quality
 {modes_section}{escalation_section}
 ## Decision principles
-- Customer value > internal efficiency
-- Shipping > perfection
-- Data > opinions
-- When unclear: decide fast, correct later
+{principles_list}
 
 ## Communication style
 Clear. Direct. Numbers-oriented.

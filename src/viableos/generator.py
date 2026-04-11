@@ -812,6 +812,7 @@ def generate_openclaw_package(
         triple_index=s3_cfg.get("triple_index"),
         deviation_logic=s3_cfg.get("deviation_logic"),
         intervention_authority=s3_cfg.get("intervention_authority"),
+        decision_principles=s3_cfg.get("decision_principles"),
     )
     (ws_path / "SOUL.md").write_text(soul)
     (ws_path / "SKILL.md").write_text(

@@ -389,6 +389,7 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                         "resource_allocation": {"type": "string"},
                         "kpi_list": _STRING_ARRAY,
                         "label": {"type": "string"},
+                        "decision_principles": _STRING_ARRAY,
                         "triple_index": _TRIPLE_INDEX,
                         "deviation_logic": _DEVIATION_LOGIC,
                         "intervention_authority": _INTERVENTION_AUTHORITY,
