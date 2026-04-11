@@ -5,6 +5,11 @@ viable_system:
   budget:
     monthly_usd: 300
     strategy: "balanced"
+    alerts:
+      - at_percent: 75
+        action: "Notify researcher of budget consumption"
+      - at_percent: 90
+        action: "Downgrade non-critical models to lower tier"
 
   identity:
     purpose: "Produce rigorous policy research on Digital Transformation of the State, Institutions, and Democracy to inform public policy decisions"
@@ -17,36 +22,147 @@ viable_system:
       - "Publish unverified data or unreviewed conclusions"
       - "Make partisan political recommendations"
       - "Use confidential government data without authorization"
+      - "Present AI-generated text as researcher-authored content"
     decisions_requiring_human:
       - "Final publication approval for Discussion Texts (TDs) and Technical Notes"
       - "Research agenda priorities and resource allocation"
       - "Institutional partnerships and data sharing agreements"
       - "Methodological framework changes"
+      - "Policy recommendations to government"
+    balance_monitoring:
+      s3_vs_s4_target: "50/50"
+      measurement: "Share of agent tokens flowing into S3 (internal optimization) vs S4 (environmental scanning)"
+      alert_if_exceeds: "75/25"
+    algedonic_channel:
+      enabled: true
+      who_can_send: "all_agents"
+      triggers:
+        - "Never-do violation detected"
+        - "Factual error found in published work"
+        - "Critical legislation change affecting ongoing research"
+        - "Data source compromised or unavailable"
+        - "Systemic malfunction"
+      bypasses_hierarchy: true
+    basta_constraint:
+      description: "Normative decisions that only the researcher can make — agents prepare briefs but never decide"
+      examples:
+        - "Institutional positioning on policy debates"
+        - "Choice of theoretical framework for a study"
+        - "Policy recommendations to government bodies"
+        - "Ethical dilemmas in data use or methodology"
+        - "Publication priority and timing"
+      agent_role: "prepare_only"
 
   system_1:
     - name: "Monitoring & Analysis"
-      purpose: "Monitor legislation, decrees, government programs, PPA, and digital government policies. Produce automated analyses and briefings for researchers"
-      autonomy: "Can monitor and draft summaries independently. Alerts and trend analyses need researcher review."
+      purpose: "Monitor legislation, decrees, government programs (EGD, PPA), digital government policies, and institutional changes. Produce automated analyses and briefings for researchers"
       tools: [web-scraping, rss-monitoring, text-summarization, alert-system, data-analysis]
       weight: 7
+      domain_context: "Central object: Research output (TDs, Technical Notes, Policy Briefs). This unit feeds the pipeline with raw legislative and policy intelligence"
+      autonomy_levels:
+        can_do_alone:
+          - "Scan DOU (Diario Oficial da Uniao) for new legislation and decrees"
+          - "Monitor gov.br portal for digital government updates"
+          - "Track OECD Digital Government Index and UN E-Government Survey releases"
+          - "Generate keyword-based alerts for tracked topics"
+          - "Draft preliminary briefing summaries"
+        needs_coordination:
+          - "Share legislative alerts with Bibliographic Research for academic context"
+          - "Provide policy change data to Data & Evidence for impact analysis"
+          - "Feed new keywords to other units when new topics emerge"
+        needs_approval:
+          - "Publish trend analysis reports"
+          - "Change monitoring scope or tracked keywords"
+          - "Assess significance level of detected changes"
+      dependencies:
+        - target: "Bibliographic Research"
+          description: "Sends legislative alerts that trigger literature searches for academic context"
+        - target: "Data & Evidence"
+          description: "Sends policy changes that require quantitative impact assessment"
+        - target: "Text Production"
+          description: "Provides briefings and analyses as input for TDs and Technical Notes"
 
     - name: "Bibliographic Research"
-      purpose: "Conduct systematic literature reviews, map theoretical frameworks (neo-institutionalism, digital governance, public administration), and maintain a knowledge base of relevant academic work"
-      autonomy: "Can search, catalog, and summarize independently. Framework synthesis and theoretical positioning need researcher guidance."
+      purpose: "Conduct systematic literature reviews, map theoretical frameworks (neo-institutionalism, digital governance, public value theory, state capacity), and maintain a knowledge base of relevant academic work"
       tools: [academic-search, pdf-extraction, citation-management, text-summarization, knowledge-base]
       weight: 6
+      domain_context: "Central object: Research output. This unit provides the theoretical and empirical foundation from existing literature"
+      autonomy_levels:
+        can_do_alone:
+          - "Search academic databases (Scielo, Google Scholar, JSTOR, Web of Science)"
+          - "Extract and catalog papers with metadata and keywords"
+          - "Summarize individual papers and generate reading notes"
+          - "Maintain and update the knowledge base"
+          - "Map citation networks and identify key authors"
+        needs_coordination:
+          - "Align literature search scope with Monitoring alerts on new policy topics"
+          - "Provide structured literature findings to Text Production"
+          - "Share framework mappings with Data & Evidence for methodological alignment"
+        needs_approval:
+          - "Synthesize theoretical positioning for a research project"
+          - "Recommend framework choices (neo-institutionalism vs digital governance vs public value)"
+          - "Assess completeness of a literature review"
+      dependencies:
+        - target: "Monitoring & Analysis"
+          description: "Receives legislative alerts that trigger searches for related academic literature"
+        - target: "Text Production"
+          description: "Delivers structured literature reviews and theoretical frameworks for integration into publications"
 
     - name: "Text Production"
-      purpose: "Assist in producing Discussion Texts (TDs), Technical Notes, policy briefs, and research reports with proper academic structure and IPEA standards"
-      autonomy: "Can draft sections and format documents independently. Final content, conclusions, and policy recommendations need researcher approval."
+      purpose: "Assist in producing Discussion Texts (TDs), Technical Notes (NTs), BAPI articles, policy briefs, and research reports following IPEA publication standards and academic structure"
       tools: [writing, editing, formatting, citation-formatting, translation]
       weight: 8
+      domain_context: "Central object: Research output. This is the convergence point where monitoring, literature, and data become publishable research"
+      autonomy_levels:
+        can_do_alone:
+          - "Draft individual sections (introduction, methodology, literature review)"
+          - "Format documents to IPEA publication standards"
+          - "Format citations and bibliographic references (ABNT)"
+          - "Translate abstracts between Portuguese and English"
+          - "Generate tables, charts descriptions, and appendices"
+        needs_coordination:
+          - "Request specific briefings from Monitoring & Analysis"
+          - "Request literature summaries from Bibliographic Research"
+          - "Request data tables and visualizations from Data & Evidence"
+        needs_approval:
+          - "Final content of conclusions and policy recommendations"
+          - "Theoretical positioning and analytical framework"
+          - "Publication readiness assessment"
+          - "Submission of any document for external review"
+      dependencies:
+        - target: "Monitoring & Analysis"
+          description: "Receives policy briefings and legislative analyses as raw material for publications"
+        - target: "Bibliographic Research"
+          description: "Receives literature reviews and theoretical framework summaries"
+        - target: "Data & Evidence"
+          description: "Receives data analyses, statistical results, and visualizations for integration"
 
     - name: "Data & Evidence"
-      purpose: "Collect, process, and analyze quantitative and qualitative data from government portals, IBGE, international organizations (OECD, World Bank, UN), and open data sources"
-      autonomy: "Can collect and clean data independently. Statistical analyses and data interpretations need researcher validation."
+      purpose: "Collect, process, and analyze quantitative and qualitative data from IBGE, CETIC.br, TCU, CGU, SGD/MGI, Atlas do Estado Brasileiro, IpeaData, OECD, World Bank, and UN datasets"
       tools: [data-collection, data-cleaning, statistical-analysis, visualization, api-integration]
       weight: 5
+      domain_context: "Central object: Research output. This unit provides the empirical evidence base for policy analysis"
+      autonomy_levels:
+        can_do_alone:
+          - "Collect data from IBGE, IpeaData, Portal da Transparencia, and open data portals"
+          - "Clean and standardize datasets"
+          - "Generate descriptive statistics and basic visualizations"
+          - "Maintain data pipeline integrity and update schedules"
+          - "Document data sources, methodologies, and limitations"
+        needs_coordination:
+          - "Align data collection with policy changes flagged by Monitoring"
+          - "Provide statistical results to Text Production for integration"
+          - "Share data quality assessments with Bibliographic Research for methodology notes"
+        needs_approval:
+          - "Interpret statistical results and draw causal inferences"
+          - "Choose statistical methods for complex analyses"
+          - "Validate data representativeness and sampling adequacy"
+          - "Publish or share datasets externally"
+      dependencies:
+        - target: "Monitoring & Analysis"
+          description: "Receives policy change alerts that trigger impact data collection"
+        - target: "Text Production"
+          description: "Delivers data analyses, tables, and visualizations for integration into publications"
 
   system_2:
     coordination_rules:
@@ -60,39 +176,134 @@ viable_system:
         action: "Alert Monitoring for context and Text Production for potential inclusion in ongoing work"
       - trigger: "Researcher defines a new research topic"
         action: "Notify all units to begin parallel collection in their respective domains"
+      - trigger: "Publication deadline approaching (2 weeks)"
+        action: "Escalate all pending inputs to priority status across units"
+    conflict_detection:
+      resource_overlaps: true
+      deadline_conflicts: true
+      output_contradictions: true
+      custom_triggers:
+        - "Monitoring and Bibliographic Research analyzing the same legislation from different angles without coordination"
+        - "Text Production waiting on data that Data & Evidence has not prioritized"
+        - "Conflicting interpretations between literature findings and empirical data"
+    transduction_mappings:
+      - from_unit: "Monitoring & Analysis"
+        to_unit: "Bibliographic Research"
+        translation: "What Monitoring delivers as a 'legislative alert' becomes a 'search query for academic context' in Bibliographic Research"
+      - from_unit: "Bibliographic Research"
+        to_unit: "Text Production"
+        translation: "What Bibliographic Research delivers as a 'literature review summary' becomes a 'theoretical framework section' in Text Production"
+      - from_unit: "Data & Evidence"
+        to_unit: "Text Production"
+        translation: "What Data & Evidence delivers as 'statistical results and tables' becomes 'empirical findings sections' in Text Production"
+      - from_unit: "Monitoring & Analysis"
+        to_unit: "Data & Evidence"
+        translation: "What Monitoring delivers as a 'policy change notification' becomes a 'data collection trigger' in Data & Evidence"
+    escalation_to_s3_after: "24h"
 
   system_3:
     reporting_rhythm: "weekly"
     resource_allocation: "Monitoring: 25%, Bibliographic Research: 25%, Text Production: 30%, Data & Evidence: 20%"
     kpi_list:
-      - "Monitoring alerts generated vs. relevant (precision)"
+      - "Monitoring alerts generated vs. relevant (precision rate)"
       - "Literature reviews completed per research cycle"
       - "Draft sections produced per week"
       - "Data sources integrated and up-to-date"
       - "Average time from research question to first draft"
+      - "Citation accuracy rate in produced texts"
+    triple_index:
+      actuality: "Current performance measured against: methodological soundness of research outputs; timeliness of policy monitoring (48h detection target)"
+      capability: "Maximum performance at optimal utilization of all four units with full data access and researcher availability"
+      potentiality: "Achievable performance with targeted investment in automated data pipelines and expanded academic database access"
+      measurement: "Alert precision rate; literature review completeness; draft sections per week; data pipeline uptime"
+    deviation_logic:
+      report_only_deviations: true
+      threshold_percent: 15
+      trend_detection: true
+    intervention_authority:
+      can_restrict_s1: true
+      requires_documentation: true
+      requires_human_approval: true
+      max_duration: "48h"
+      allowed_actions:
+        - "Reprioritize unit workload"
+        - "Redirect tokens from lower-priority to higher-priority units"
+        - "Temporarily pause non-critical monitoring to focus on publication deadline"
+        - "Downgrade model tier for routine tasks"
 
   system_3_star:
     schedule: "bi-weekly"
     checks:
       - name: "Source Verification"
         target: "Monitoring & Analysis"
-        method: "Cross-reference 3 recent briefings against original sources for accuracy and completeness"
+        method: "Cross-reference 3 recent briefings against original sources (DOU, gov.br, legislation portals) for accuracy and completeness"
+        data_source: "Original legislation text from planalto.gov.br"
+        comparison: "Briefing claims vs. original legal text"
       - name: "Literature Quality"
         target: "Bibliographic Research"
-        method: "Verify citation accuracy and relevance scoring for last 5 cataloged papers"
+        method: "Verify citation accuracy, publication venue credibility, and relevance scoring for last 5 cataloged papers"
+        data_source: "Original papers from Scielo, Google Scholar"
+        comparison: "Catalog metadata vs. original paper metadata"
       - name: "Academic Standards"
         target: "Text Production"
-        method: "Review last draft section against IPEA publication guidelines and methodological rigor"
+        method: "Review last draft section against IPEA publication guidelines (ABNT citations, TD structure, abstract quality)"
+        data_source: "IPEA editorial guidelines"
+        comparison: "Draft formatting vs. institutional standards"
       - name: "Data Integrity"
         target: "Data & Evidence"
-        method: "Validate data pipeline outputs against original sources for 3 recent datasets"
+        method: "Validate data pipeline outputs against original sources for 3 recent datasets. Check for stale data, broken APIs, and transformation errors"
+        data_source: "Original data from IBGE, IpeaData, Portal da Transparencia"
+        comparison: "Processed data vs. raw source data"
     on_failure: "Flag for researcher review with detailed discrepancy report"
+    provider_constraint:
+      must_differ_from: "s1"
+      reason: "Audit must use a different AI provider than operational units to prevent correlated hallucinations in research outputs"
+    reporting_target: "s3_and_human"
+    independence_rules:
+      - "Auditor never receives instructions from the unit being audited"
+      - "Audit findings go directly to S3 and human researcher, not to audited unit"
+      - "Auditor uses different data retrieval path than the unit being checked"
 
   system_4:
     monitoring:
-      competitors: ["Other policy research institutes (FGV, Insper, CEBRAP)", "International research organizations (Brookings, OECD)"]
-      technology: ["New AI research tools", "Open data platforms", "NLP advances for policy analysis", "Large language model capabilities"]
-      regulation: ["Research ethics regulations", "Open access mandates", "Data protection (LGPD)", "Government transparency laws (LAI)"]
+      competitors: ["FGV DAPP/EBAPE (digital government research)", "CEBRAP (institutional analysis)", "Insper (regulation and governance)", "ENAP (public administration capacity)", "University research groups (USP, UnB, FGV)"]
+      technology: ["Large language models for policy analysis", "NLP advances for legislative text mining", "Open data platforms and API standards", "Automated systematic review tools", "Knowledge graph and ontology tools for institutional mapping"]
+      regulation: ["EGD 2024-2027 (Estrategia de Governo Digital)", "Lei 14.129/2021 (Lei de Governo Digital)", "LGPD (Lei 13.709/2018) — public sector implications", "LAI (Lei 12.527/2011) — transparency requirements", "PL 2338/2023 (Marco Legal da IA)", "OECD Digital Government recommendations"]
+    premises_register:
+      - premise: "EGD 2024-2027 remains the active federal digital government strategy"
+        check_frequency: "monthly"
+        invalidation_signal: "New decree replacing or significantly amending the EGD"
+        consequence_if_invalid: "All research referencing EGD targets and pillars must be updated"
+      - premise: "LGPD enforcement framework for the public sector remains stable"
+        check_frequency: "monthly"
+        invalidation_signal: "ANPD issues new regulation specifically altering public sector data processing rules"
+        consequence_if_invalid: "Data governance analysis and LGPD-LAI tension framework must be revised"
+      - premise: "PL 2338/2023 (AI regulation) has not been enacted into law"
+        check_frequency: "weekly"
+        invalidation_signal: "Bill is signed into law or substantially amended in Congress"
+        consequence_if_invalid: "All AI governance research must shift from prospective analysis to implementation analysis"
+      - premise: "gov.br platform continues as the unified federal digital government portal"
+        check_frequency: "monthly"
+        invalidation_signal: "Structural change to gov.br architecture, governance, or scope"
+        consequence_if_invalid: "Digital identity and platform governance analysis must be recalibrated"
+      - premise: "Brazil's OECD membership commitments on digital government are being implemented"
+        check_frequency: "quarterly"
+        invalidation_signal: "Brazil fails OECD peer review or diverges from Digital Government Policy Committee recommendations"
+        consequence_if_invalid: "International comparison framework and benchmarking methodology must be revised"
+    strategy_bridge:
+      injection_point: "Before the weekly reporting"
+      format: "Strategic briefing with max. 3 action recommendations tied to specific research projects"
+      recipient: "s3-optimization"
+    weak_signals:
+      enabled: true
+      sources:
+        - "Congressional committee agendas (Comissao de Ciencia e Tecnologia)"
+        - "ANPD public consultations and technical notes"
+        - "TCU audit planning documents"
+        - "OECD working papers on digital government"
+        - "International conference proceedings (ICEGOV, dg.o, HICSS)"
+        - "Brazilian academic preprint servers and new thesis defenses"
+      detection_method: "Systematic weekly scan of all sources. Flag topics appearing in 2+ sources within 30 days as emerging trends"
 
   human_in_the_loop:
     notification_channel: "email"
@@ -101,33 +312,125 @@ viable_system:
       - "research_agenda_changes"
       - "institutional_data_sharing"
       - "policy_recommendations"
+      - "theoretical_framework_selection"
     review_required:
       - "literature_review_synthesis"
       - "data_analysis_interpretations"
       - "draft_sections_with_conclusions"
       - "trend_analysis_reports"
+      - "international_comparison_assessments"
     emergency_alerts:
-      - "critical_legislation_change"
-      - "data_source_unavailable"
+      - "critical_legislation_change_affecting_ongoing_research"
+      - "data_source_unavailable_or_compromised"
       - "factual_error_detected_in_published_work"
+      - "ai_regulation_bill_enacted"
 
   shared_resources:
-    - "IPEA institutional knowledge base"
-    - "Academic paper database"
-    - "Government open data portal access"
-    - "Citation management system"
+    - "IPEA institutional knowledge base and IpeaData portal"
+    - "Academic paper database (Scielo, Google Scholar, Web of Science access)"
+    - "Government open data portal access (dados.gov.br, Portal da Transparencia)"
+    - "Citation management system (ABNT-compliant)"
+    - "Atlas do Estado Brasileiro (federal workforce data)"
+    - "CETIC.br/NIC.br survey data (TIC Governo Eletronico, TIC Domicilios)"
 
   domain_flow:
-    central_object: "Research output (TDs, Technical Notes, Policy Briefs)"
-    flow_description: "Research questions flow from agenda setting through monitoring, literature review, and data collection, converging in text production for final output"
-    feedback_loop: "Published outputs generate new monitoring keywords, reveal literature gaps, and inform future research priorities"
+    central_object: "Research output (TDs, Technical Notes, BAPI articles, Policy Briefs)"
+    flow_description: "Research questions flow from agenda setting through monitoring (legislation, policy), literature review (theoretical grounding), and data collection (empirical evidence), converging in text production for publishable output following IPEA standards"
+    feedback_loop: "Published outputs generate new monitoring keywords, reveal literature gaps, inform future research priorities, and feed back into the premises register"
+
+  dependencies:
+    - from: "Monitoring & Analysis"
+      to: "Bibliographic Research"
+      description: "Legislative alerts trigger searches for related academic literature and theoretical context"
+    - from: "Monitoring & Analysis"
+      to: "Data & Evidence"
+      description: "Policy change notifications trigger quantitative impact data collection"
+    - from: "Bibliographic Research"
+      to: "Text Production"
+      description: "Literature reviews and framework summaries become theoretical sections of publications"
+    - from: "Data & Evidence"
+      to: "Text Production"
+      description: "Statistical results, tables, and visualizations become empirical findings sections"
+    - from: "Monitoring & Analysis"
+      to: "Text Production"
+      description: "Policy briefings provide institutional context and legislative background for publications"
+    - from: "Text Production"
+      to: "Monitoring & Analysis"
+      description: "Published outputs generate new keywords and topics to monitor"
 
   success_criteria:
     - criterion: "Research outputs are methodologically sound and pass peer review"
       priority: "1"
     - criterion: "Policy monitoring is timely — relevant changes detected within 48h"
       priority: "2"
-    - criterion: "Literature reviews are comprehensive and up-to-date"
+    - criterion: "Literature reviews are comprehensive and up-to-date with current academic debate"
       priority: "3"
-    - criterion: "Data analyses are reproducible and well-documented"
+    - criterion: "Data analyses are reproducible and well-documented with clear methodology"
       priority: "3"
+
+  operational_modes:
+    normal:
+      description: "Ongoing research operations — continuous monitoring, incremental literature reviews, steady text production"
+      s1_autonomy: "full"
+      reporting_frequency: "weekly"
+      escalation_threshold: "4h"
+    elevated:
+      description: "Publication deadline approaching or significant policy event detected"
+      triggers:
+        - "TD or Technical Note deadline within 3 weeks"
+        - "Major legislation change (new law, decree, or regulatory framework)"
+        - "OECD or UN report release affecting research scope"
+      s1_autonomy: "standard"
+      reporting_frequency: "daily"
+      escalation_threshold: "1h"
+    crisis:
+      description: "Urgent government demand, factual error in published work, or critical data integrity failure"
+      triggers:
+        - "Factual error detected in published research output"
+        - "Urgent briefing request from government ministry"
+        - "Data pipeline systemic failure affecting ongoing publication"
+      s1_autonomy: "restricted"
+      reporting_frequency: "hourly"
+      escalation_threshold: "immediate"
+      human_required: true
+
+  escalation_chains:
+    operational:
+      path:
+        - "s2-coordination"
+        - "s3-optimization"
+        - "human"
+      timeout_per_step: "2h"
+      description: "Standard operational issues (missed deadlines, resource conflicts)"
+    quality:
+      path:
+        - "s3-star-audit"
+        - "s3-optimization"
+        - "human"
+      timeout_per_step: "2h"
+      description: "Quality issues (inaccurate citations, data errors, methodology concerns)"
+    strategic:
+      path:
+        - "s4-intelligence"
+        - "s5-policy"
+        - "human"
+      timeout_per_step: "4h"
+      description: "Strategic issues (research agenda shifts, framework reconsideration, institutional positioning)"
+    algedonic:
+      path:
+        - "s5-policy"
+        - "human"
+      timeout_per_step: "15min"
+      description: "Pain signal for fundamental problems — bypasses normal hierarchy"
+      triggers:
+        - "Published unverified data or unreviewed conclusions"
+        - "Partisan political recommendation generated"
+        - "Confidential government data used without authorization"
+        - "AI-generated text presented as researcher-authored"
+        - "Systemic malfunction"
+
+  vollzug_protocol:
+    enabled: true
+    timeout_quittung: "30min"
+    timeout_vollzug: "48h"
+    on_timeout: "alert_human"
