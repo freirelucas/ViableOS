@@ -373,6 +373,133 @@ def _generate_env_example(config: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _generate_setup_sh(config: dict[str, Any]) -> str:
+    """Generate a one-command setup script for the deployment package."""
+    vs = config.get("viable_system", {})
+    system_name = vs.get("name", "ViableOS System")
+    model_routing = vs.get("model_routing", {})
+    provider_pref = model_routing.get("provider_preference", "")
+
+    # Collect unique Ollama models from model_routing
+    ollama_models: list[str] = []
+    seen: set[str] = set()
+    for key, value in model_routing.items():
+        if key in ("provider_preference",) or not isinstance(value, str):
+            continue
+        if value.startswith("ollama/"):
+            clean = value.replace("ollama/", "", 1)
+            if clean not in seen:
+                ollama_models.append(clean)
+                seen.add(clean)
+
+    # Build pull commands
+    pull_lines = "\n".join(
+        f'  pull_model "{m}"' for m in ollama_models
+    )
+
+    ollama_section = ""
+    if provider_pref == "ollama" and ollama_models:
+        ollama_section = f'''
+# ── Ollama ────────────────────────────────────────────────────
+step "Checking Ollama installation..."
+
+if command -v ollama &>/dev/null; then
+  ok "Ollama already installed ($(ollama --version 2>/dev/null || echo 'unknown version'))"
+else
+  step "Installing Ollama..."
+  curl -fsSL https://ollama.com/install.sh | sh
+  ok "Ollama installed"
+fi
+
+# Start Ollama server if not running
+if ! curl -sf http://localhost:11434/api/tags &>/dev/null; then
+  step "Starting Ollama server..."
+  ollama serve &>/dev/null &
+  OLLAMA_PID=$!
+  # Wait for server to be ready
+  for i in $(seq 1 30); do
+    curl -sf http://localhost:11434/api/tags &>/dev/null && break
+    sleep 1
+  done
+  if curl -sf http://localhost:11434/api/tags &>/dev/null; then
+    ok "Ollama server started (PID $OLLAMA_PID)"
+  else
+    fail "Ollama server failed to start within 30s"
+  fi
+else
+  ok "Ollama server already running"
+fi
+
+pull_model() {{
+  local model="$1"
+  if ollama list 2>/dev/null | grep -q "$model"; then
+    ok "Model $model already pulled"
+  else
+    step "Pulling $model (this may take a while)..."
+    ollama pull "$model"
+    ok "Model $model ready"
+  fi
+}}
+
+{pull_lines}
+'''
+
+    return f'''#!/usr/bin/env bash
+# ── ViableOS Setup: {system_name} ─────────────────────────────
+# One-command setup for the generated LangGraph deployment.
+# Usage: chmod +x setup.sh && ./setup.sh
+
+set -euo pipefail
+
+RED="\\033[0;31m"
+GREEN="\\033[0;32m"
+BLUE="\\033[0;34m"
+NC="\\033[0m"
+
+step()  {{ echo -e "${{BLUE}}→${{NC}} $1"; }}
+ok()    {{ echo -e "${{GREEN}}✓${{NC}} $1"; }}
+fail()  {{ echo -e "${{RED}}✗ $1${{NC}}"; exit 1; }}
+
+echo ""
+echo "  ViableOS — {system_name}"
+echo "  Setup script"
+echo ""
+{ollama_section}
+# ── Python environment ────────────────────────────────────────
+step "Setting up Python environment..."
+
+if [ ! -d ".venv" ]; then
+  python3 -m venv .venv
+  ok "Virtual environment created"
+else
+  ok "Virtual environment already exists"
+fi
+
+source .venv/bin/activate
+
+step "Installing dependencies..."
+pip install -q -r requirements.txt
+ok "Dependencies installed"
+
+# ── Environment file ──────────────────────────────────────────
+if [ ! -f ".env" ]; then
+  cp .env.example .env
+  ok "Created .env from .env.example"
+else
+  ok ".env already exists"
+fi
+
+# ── Ready ─────────────────────────────────────────────────────
+echo ""
+echo -e "${{GREEN}}Setup complete!${{NC}}"
+echo ""
+echo "To start the system:"
+echo "  source .venv/bin/activate"
+echo "  langgraph up"
+echo ""
+'''
+
+
 def generate_langgraph_package(
     config: dict[str, Any],
     output_dir: str | Path,
@@ -417,6 +544,10 @@ def generate_langgraph_package(
     (output / "requirements.txt").write_text(_generate_requirements_txt())
     (output / "langgraph.json").write_text(_generate_langgraph_json(vs.get("name", "")))
     (output / ".env.example").write_text(_generate_env_example(config))
+
+    setup_sh = output / "setup.sh"
+    setup_sh.write_text(_generate_setup_sh(config))
+    setup_sh.chmod(0o755)
 
     # ── Generate agent prompt directories ──────────────────────
 
