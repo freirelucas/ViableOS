@@ -65,6 +65,9 @@ def _model_to_langchain(model: str) -> tuple[str, str]:
         return "ChatOpenAI", model  # DeepSeek uses OpenAI-compatible API
     if model.startswith("grok"):
         return "ChatOpenAI", model  # xAI uses OpenAI-compatible API
+    if model.startswith("ollama/") or "ollama" in model.lower():
+        clean = model.replace("ollama/", "", 1)
+        return "ChatOllama", clean
     # Default to OpenAI-compatible
     return "ChatOpenAI", model
 
@@ -167,6 +170,8 @@ def _generate_graph_py(
         imports.append("from langchain_openai import ChatOpenAI")
     if "ChatGoogleGenerativeAI" in model_classes:
         imports.append("from langchain_google_genai import ChatGoogleGenerativeAI")
+    if "ChatOllama" in model_classes:
+        imports.append("from langchain_community.chat_models import ChatOllama")
 
     imports_str = "\n".join(imports)
 
@@ -337,6 +342,7 @@ langchain-core>=0.3
 langchain-anthropic>=0.3
 langchain-openai>=0.3
 langchain-google-genai>=2.0
+langchain-community>=0.3
 langgraph-checkpoint>=2.0
 python-dotenv>=1.0
 """
@@ -344,17 +350,20 @@ python-dotenv>=1.0
 
 def _generate_env_example(config: dict[str, Any]) -> str:
     vs = config.get("viable_system", {})
-    models_used: set[str] = set()
-    for unit in vs.get("system_1", []):
-        if unit.get("model"):
-            models_used.add(unit["model"])
+    model_routing = vs.get("model_routing", {})
+    provider_pref = model_routing.get("provider_preference", "")
 
     lines = ["# ViableOS LangGraph Environment Variables", ""]
 
-    # Always include Anthropic since it's the default
-    lines.append("ANTHROPIC_API_KEY=sk-ant-...")
-    lines.append("OPENAI_API_KEY=sk-...")
-    lines.append("GOOGLE_API_KEY=...")
+    if provider_pref == "ollama":
+        lines.append("# Ollama (local — no API key needed)")
+        lines.append("OLLAMA_BASE_URL=http://localhost:11434")
+    else:
+        # Include cloud provider keys
+        lines.append("ANTHROPIC_API_KEY=sk-ant-...")
+        lines.append("OPENAI_API_KEY=sk-...")
+        lines.append("GOOGLE_API_KEY=...")
+
     lines.append("")
     lines.append("# LangSmith (optional)")
     lines.append("LANGCHAIN_TRACING_V2=true")

@@ -441,3 +441,13 @@ viable_system:
     timeout_quittung: "30min"
     timeout_vollzug: "48h"
     on_timeout: "alert_human"
+
+  model_routing:
+    provider_preference: "ollama"
+    s1_routine: "ollama/llama3.1:8b"
+    s2_coordination: "ollama/llama3.1:8b"
+    s3_optimization: "ollama/qwen2.5:32b"
+    s3_star_audit: "ollama/mistral-small:22b"
+    s4_intelligence: "ollama/qwen2.5:32b"
+    s5_preparation: "ollama/llama3.1:8b"
+    fallback: "ollama/llama3.1:8b"
