@@ -53,9 +53,13 @@ viable_system:
         - "Publication priority and timing"
       agent_role: "prepare_only"
 
+  persona_source:
+    ipeapub_url: "http://localhost:8000"
+
   system_1:
     - name: "Monitoring & Analysis"
       purpose: "Monitor legislation, decrees, government programs (EGD, PPA), digital government policies, and institutional changes. Produce automated analyses and briefings for researchers"
+      persona: "Luseni Aquino"
       tools: [web-scraping, rss-monitoring, text-summarization, alert-system, data-analysis]
       weight: 7
       domain_context: "Central object: Research output (TDs, Technical Notes, Policy Briefs). This unit feeds the pipeline with raw legislative and policy intelligence"
@@ -84,6 +88,7 @@ viable_system:
 
     - name: "Bibliographic Research"
       purpose: "Conduct systematic literature reviews, map theoretical frameworks (neo-institutionalism, digital governance, public value theory, state capacity), and maintain a knowledge base of relevant academic work"
+      persona: "Flávia de Holanda Schmidt"
       tools: [academic-search, pdf-extraction, citation-management, text-summarization, knowledge-base]
       weight: 6
       domain_context: "Central object: Research output. This unit provides the theoretical and empirical foundation from existing literature"

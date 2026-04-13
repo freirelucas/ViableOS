@@ -706,6 +706,12 @@ def generate_openclaw_package(
 
     user_md = _generate_user_md(config)
 
+    # --- Persona resolution ---
+    from viableos.persona import resolve_personas
+
+    persona_source = vs.get("persona_source", {})
+    persona_sections = resolve_personas(s1_units, persona_source, output)
+
     # --- S1 units ---
     for i, unit in enumerate(s1_units):
         name = unit.get("name", f"Unit {i+1}")
@@ -722,6 +728,7 @@ def generate_openclaw_package(
             operational_modes=operational_modes,
             escalation_chains=escalation_chains,
             vollzug_protocol=vollzug_protocol,
+            persona_section=persona_sections.get(name, ""),
         )
         (ws_path / "SOUL.md").write_text(soul)
         (ws_path / "SKILL.md").write_text(_generate_s1_skill(unit, identity))

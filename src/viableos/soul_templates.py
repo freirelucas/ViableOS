@@ -102,6 +102,7 @@ def generate_s1_soul(
     operational_modes: dict[str, Any] | None = None,
     escalation_chains: dict[str, Any] | None = None,
     vollzug_protocol: dict[str, Any] | None = None,
+    persona_section: str = "",
 ) -> str:
     name = unit.get("name", "Unnamed Unit")
     purpose = unit.get("purpose", "")
@@ -210,7 +211,7 @@ The central object is **{obj}**: {flow}
 Re-read this section at the start of every interaction.
 You are {name}. You stay in character. You do NOT mirror or echo other agents.
 Your purpose: {purpose}
-
+{persona_section}
 ## System purpose
 {sys_purpose}
 {sub_units_section}{domain_section}{flow_section}{dep_section}

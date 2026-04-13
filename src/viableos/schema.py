@@ -321,6 +321,7 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                             "model": {"type": "string"},
                             "weight": {"type": "number", "minimum": 1, "maximum": 10},
                             "domain_context": {"type": "string"},
+                            "persona": {"type": "string"},
                             "sub_units": {
                                 "type": "array",
                                 "items": {
@@ -521,6 +522,24 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                         "on_timeout": {
                             "type": "string",
                             "enum": ["escalate", "remind", "alert_human"],
+                        },
+                    },
+                },
+                "persona_source": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "dspace_url": {"type": "string"},
+                        "ipeapub_url": {"type": "string"},
+                        "cache_dir": {"type": "string"},
+                        "cache_max_age_hours": {
+                            "type": "number",
+                            "minimum": 0,
+                        },
+                        "max_tokens": {
+                            "type": "number",
+                            "minimum": 100,
+                            "maximum": 3000,
                         },
                     },
                 },

@@ -549,6 +549,13 @@ def generate_langgraph_package(
     setup_sh.write_text(_generate_setup_sh(config))
     setup_sh.chmod(0o755)
 
+    # ── Persona resolution ────────────────────────────────────
+
+    from viableos.persona import resolve_personas
+
+    persona_source = vs.get("persona_source", {})
+    persona_sections = resolve_personas(s1_units, persona_source, output)
+
     # ── Generate agent prompt directories ──────────────────────
 
     agents_dir = output / "agents"
@@ -568,6 +575,7 @@ def generate_langgraph_package(
             operational_modes=operational_modes,
             escalation_chains=escalation_chains,
             vollzug_protocol=vollzug_protocol,
+            persona_section=persona_sections.get(name, ""),
         )
         (agent_dir / "system_prompt.md").write_text(soul)
 
