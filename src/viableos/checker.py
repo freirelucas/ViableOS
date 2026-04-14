@@ -425,7 +425,7 @@ def _check_behavioral_specs(vs: dict[str, Any]) -> list[Warning]:
     has_assessment_origin = bool(
         vs.get("operational_modes")
         or vs.get("escalation_chains")
-        or vs.get("vollzug_protocol")
+        or vs.get("execution_protocol")
         or any(u.get("autonomy_levels") for u in vs.get("system_1", []))
     )
     if not has_assessment_origin:
@@ -465,14 +465,14 @@ def _check_behavioral_specs(vs: dict[str, Any]) -> list[Warning]:
             suggestion="Add an algedonic channel that goes directly to S5/human.",
         ))
 
-    # ── Vollzug Protocol ──
-    vollzug = vs.get("vollzug_protocol", {})
-    if not vollzug or not vollzug.get("enabled"):
+    # ── Execution Protocol ──
+    exec_protocol = vs.get("execution_protocol", {})
+    if not exec_protocol or not exec_protocol.get("enabled"):
         warnings.append(Warning(
             category="Behavioral Specs",
             severity="info",
-            message="Vollzug protocol not active. Directives won't be tracked to completion.",
-            suggestion="Enable the vollzug protocol to ensure agents acknowledge and execute directives.",
+            message="Execution protocol not active. Directives won't be tracked to completion.",
+            suggestion="Enable the execution protocol to ensure agents acknowledge and execute directives.",
         ))
 
     # ── S1 Autonomy Levels ──

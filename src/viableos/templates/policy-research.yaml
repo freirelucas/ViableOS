@@ -441,10 +441,10 @@ viable_system:
         - "AI-generated text presented as researcher-authored"
         - "Systemic malfunction"
 
-  vollzug_protocol:
+  execution_protocol:
     enabled: true
-    timeout_quittung: "30min"
-    timeout_vollzug: "48h"
+    timeout_acknowledgment: "30min"
+    timeout_completion: "48h"
     on_timeout: "alert_human"
 
   model_routing:

@@ -67,9 +67,9 @@ Not every issue should go through the same path. Operational issues route throug
 
 This mirrors how real organizations work. A supply chain delay goes through normal channels. A data breach goes to the CEO immediately.
 
-### 3. Vollzug Protocol
+### 3. Execution Protocol
 
-German has a word for this: *Vollzug* — the act of carrying out a directive, confirmed by receipt and execution report. When S3 tells an S1 unit to change its approach, the directive isn't complete until:
+Originally called *Vollzug* in Pfiffner's Swiss management theory — the act of carrying out a directive, confirmed by receipt and execution report. When S3 tells an S1 unit to change its approach, the directive isn't complete until:
 
 1. The S1 agent **acknowledges** receipt (timeout: 15-30 min)
 2. The S1 agent **executes** the directive (timeout: 4h-1w depending on team size)

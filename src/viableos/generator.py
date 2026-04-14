@@ -682,7 +682,7 @@ def generate_openclaw_package(
     # ── Behavioral Specs (from assessment transformer) ──
     operational_modes = vs.get("operational_modes")
     escalation_chains = vs.get("escalation_chains")
-    vollzug_protocol = vs.get("vollzug_protocol")
+    execution_protocol = vs.get("execution_protocol")
     s2_cfg = vs.get("system_2", {})
     conflict_detection = s2_cfg.get("conflict_detection")
     transduction_mappings = s2_cfg.get("transduction_mappings")
@@ -727,7 +727,7 @@ def generate_openclaw_package(
             dependencies=dependencies, domain_flow=domain_flow,
             operational_modes=operational_modes,
             escalation_chains=escalation_chains,
-            vollzug_protocol=vollzug_protocol,
+            execution_protocol=execution_protocol,
             persona_section=persona_sections.get(name, ""),
         )
         (ws_path / "SOUL.md").write_text(soul)

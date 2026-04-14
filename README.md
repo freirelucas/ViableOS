@@ -20,7 +20,7 @@ Built from real community pain points: token cost management, agent looping, wor
 ### Behavioral Specifications
 - **Operational Modes** — Normal / Elevated / Crisis with mode-dependent autonomy, reporting frequency, and escalation thresholds
 - **Escalation Chains** — Operational, quality, strategic, and algedonic paths with per-step timeouts
-- **Vollzug Protocol** — Directive tracking: acknowledge → execute → report, with timeout escalation
+- **Execution Protocol** (originally *Vollzug* from Pfiffner's Swiss management theory) — Directive tracking: acknowledge → execute → report, with timeout escalation
 - **Autonomy Matrix** — Per-unit definition of what agents can do alone, what needs coordination, what needs approval
 - **Conflict Detection & Transduction** — S2 detects resource overlaps, deadline conflicts, output contradictions
 - **Triple Index** — S3 tracks actuality, capability, and potentiality with deviation logic
@@ -120,7 +120,7 @@ viableos generate viableos.yaml        # Generate OpenClaw package
 
 | System | Role | Behavioral Specs |
 |---|---|---|
-| S1 | Operations — the units that do the actual work | Autonomy matrix, operational modes, vollzug protocol |
+| S1 | Operations — the units that do the actual work | Autonomy matrix, operational modes, execution protocol |
 | S2 | Coordination — prevents conflicts between units | Conflict detection, transduction mappings, escalation routing |
 | S3 | Optimization — allocates resources, tracks KPIs | Triple index (actuality/capability/potentiality), deviation logic, intervention authority |
 | S3* | Audit — independent quality checks (different provider) | Provider constraint (anti-correlation), independence rules, read-only access |
@@ -211,7 +211,7 @@ npx playwright test        # E2E tests
 - [x] v0.1 — YAML schema, VSM completeness checker, CLI
 - [x] v0.2 — Web wizard, dashboard, budget calculator, OpenClaw generator, 12 templates, React + FastAPI
 - [x] v0.2.1 — Chat-based assessment interview, file upload, SSE streaming, LangGraph export
-- [x] v0.2.2 — **Behavioral specifications**: operational modes, escalation chains, vollzug protocol, autonomy matrix, conflict detection, triple index, algedonic channel
+- [x] v0.2.2 — **Behavioral specifications**: operational modes, escalation chains, execution protocol, autonomy matrix, conflict detection, triple index, algedonic channel
 - [ ] v0.3 — Runtime engine: execute generated packages, live agent monitoring, Operations Room
 - [ ] v0.4 — Multi-runtime support (LangGraph, CrewAI, custom), benchmark integration
 

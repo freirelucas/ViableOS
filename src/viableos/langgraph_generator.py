@@ -526,7 +526,7 @@ def generate_langgraph_package(
     success_criteria = vs.get("success_criteria", [])
     operational_modes = vs.get("operational_modes")
     escalation_chains = vs.get("escalation_chains")
-    vollzug_protocol = vs.get("vollzug_protocol")
+    execution_protocol = vs.get("execution_protocol")
 
     # Generate coordination rules
     auto_rules = generate_base_rules(s1_units)
@@ -574,7 +574,7 @@ def generate_langgraph_package(
             dependencies=dependencies, domain_flow=domain_flow,
             operational_modes=operational_modes,
             escalation_chains=escalation_chains,
-            vollzug_protocol=vollzug_protocol,
+            execution_protocol=execution_protocol,
             persona_section=persona_sections.get(name, ""),
         )
         (agent_dir / "system_prompt.md").write_text(soul)

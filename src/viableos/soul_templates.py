@@ -74,16 +74,16 @@ Triggers:
 """
 
 
-def _render_vollzug_protocol(vollzug: dict[str, Any] | None) -> str:
-    """Render the Vollzug Protocol section (for S1 agents)."""
-    if not vollzug or not vollzug.get("enabled"):
+def _render_execution_protocol(protocol: dict[str, Any] | None) -> str:
+    """Render the Execution Protocol section (for S1 agents)."""
+    if not protocol or not protocol.get("enabled"):
         return ""
     return f"""
 ## Execution Obligation
-For every task you respond with an **acknowledgment** within {vollzug.get('timeout_quittung', '30min')}.
+For every task you respond with an **acknowledgment** within {protocol.get('timeout_acknowledgment', '30min')}.
 After completion you send a **completion report**.
 Without a completion report the task is considered NOT done.
-On timeout ({vollzug.get('timeout_vollzug', '48h')} without completion): {vollzug.get('on_timeout', 'escalate')}.
+On timeout ({protocol.get('timeout_completion', '48h')} without completion): {protocol.get('on_timeout', 'escalate')}.
 """
 
 
@@ -101,7 +101,7 @@ def generate_s1_soul(
     domain_flow: dict[str, Any] | None = None,
     operational_modes: dict[str, Any] | None = None,
     escalation_chains: dict[str, Any] | None = None,
-    vollzug_protocol: dict[str, Any] | None = None,
+    execution_protocol: dict[str, Any] | None = None,
     persona_section: str = "",
 ) -> str:
     name = unit.get("name", "Unnamed Unit")
@@ -203,7 +203,7 @@ The central object is **{obj}**: {flow}
     # ── Behavioral Specs ──
     modes_section = _render_operational_modes(operational_modes)
     escalation_section = _render_escalation_protocol(escalation_chains, "s1")
-    vollzug_section = _render_vollzug_protocol(vollzug_protocol)
+    execution_section = _render_execution_protocol(execution_protocol)
 
     return f"""# {name}
 
@@ -229,7 +229,7 @@ Your purpose: {purpose}
 
 ## Other units in this system
 {_bullet_list(other_units)}
-{modes_section}{escalation_section}{vollzug_section}
+{modes_section}{escalation_section}{execution_section}
 ## Boundaries
 - You work ONLY in your workspace directory — never touch other agents' files
 - You NEVER contact other units directly — the Coordinator handles that

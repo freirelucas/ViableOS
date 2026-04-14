@@ -348,28 +348,28 @@ def _build_escalation_chains(assessment: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _build_vollzug_protocol(assessment: dict[str, Any]) -> dict[str, Any]:
-    """Build Vollzug protocol with timeouts based on team size and reporting rhythm."""
+def _build_execution_protocol(assessment: dict[str, Any]) -> dict[str, Any]:
+    """Build execution protocol with timeouts based on team size and reporting rhythm."""
     team_size = _get_team_size(assessment)
     s3_config = _build_s3_config(assessment)
     rhythm = s3_config.get("reporting_rhythm", "weekly")
 
-    timeout_quittung = "15min" if team_size <= 2 else "30min"
+    timeout_acknowledgment = "15min" if team_size <= 2 else "30min"
 
-    rhythm_to_vollzug = {
+    rhythm_to_completion = {
         "hourly": "4h",
         "daily": "12h",
         "weekly": "48h",
         "monthly": "1w",
     }
-    timeout_vollzug = rhythm_to_vollzug.get(rhythm, "48h")
+    timeout_completion = rhythm_to_completion.get(rhythm, "48h")
 
     on_timeout = "alert_human" if team_size <= 2 else "escalate"
 
     return {
         "enabled": True,
-        "timeout_quittung": timeout_quittung,
-        "timeout_vollzug": timeout_vollzug,
+        "timeout_acknowledgment": timeout_acknowledgment,
+        "timeout_completion": timeout_completion,
         "on_timeout": on_timeout,
     }
 
@@ -606,7 +606,7 @@ def transform_assessment(assessment: dict[str, Any]) -> dict[str, Any]:
     # Top-level
     operational_modes = _build_operational_modes(assessment)
     escalation_chains = _build_escalation_chains(assessment)
-    vollzug_protocol = _build_vollzug_protocol(assessment)
+    execution_protocol = _build_execution_protocol(assessment)
 
     # S1: autonomy levels per unit
     for unit in s1_units:
@@ -678,7 +678,7 @@ def transform_assessment(assessment: dict[str, Any]) -> dict[str, Any]:
             "shared_resources": shared_resources,
             "operational_modes": operational_modes,
             "escalation_chains": escalation_chains,
-            "vollzug_protocol": vollzug_protocol,
+            "execution_protocol": execution_protocol,
         },
     }
 

@@ -145,16 +145,16 @@ class TestTransformAssessment:
         # Algedonic timeout is always short
         assert chains["algedonic"]["timeout_per_step"] == "15min"
 
-    def test_vollzug_protocol_generated(self):
-        """Vollzug protocol is enabled with sensible timeouts."""
+    def test_execution_protocol_generated(self):
+        """Execution protocol is enabled with sensible timeouts."""
         assessment = _make_assessment()
         config = transform_assessment(assessment)
-        vollzug = config["viable_system"]["vollzug_protocol"]
+        execution = config["viable_system"]["execution_protocol"]
 
-        assert vollzug["enabled"] is True
-        assert vollzug["timeout_quittung"] in ("15min", "30min")
-        assert vollzug["timeout_vollzug"] in ("4h", "12h", "48h", "1w")
-        assert vollzug["on_timeout"] in ("escalate", "remind", "alert_human")
+        assert execution["enabled"] is True
+        assert execution["timeout_acknowledgment"] in ("15min", "30min")
+        assert execution["timeout_completion"] in ("4h", "12h", "48h", "1w")
+        assert execution["on_timeout"] in ("escalate", "remind", "alert_human")
 
     def test_s1_autonomy_levels_generated(self):
         """Each S1 unit gets structured autonomy levels."""
@@ -256,8 +256,8 @@ class TestTransformAssessment:
 
         # Shorter timeouts
         assert vs["escalation_chains"]["operational"]["timeout_per_step"] == "1h"
-        assert vs["vollzug_protocol"]["timeout_quittung"] == "15min"
-        assert vs["vollzug_protocol"]["on_timeout"] == "alert_human"
+        assert vs["execution_protocol"]["timeout_acknowledgment"] == "15min"
+        assert vs["execution_protocol"]["on_timeout"] == "alert_human"
 
         # More human approval
         assert vs["system_3"]["intervention_authority"]["requires_human_approval"] is True
@@ -274,8 +274,8 @@ class TestTransformAssessment:
 
         # Longer timeouts
         assert vs["escalation_chains"]["operational"]["timeout_per_step"] == "4h"
-        assert vs["vollzug_protocol"]["timeout_quittung"] == "30min"
-        assert vs["vollzug_protocol"]["on_timeout"] == "escalate"
+        assert vs["execution_protocol"]["timeout_acknowledgment"] == "30min"
+        assert vs["execution_protocol"]["on_timeout"] == "escalate"
 
         # Less human approval
         assert vs["system_3"]["intervention_authority"]["requires_human_approval"] is False

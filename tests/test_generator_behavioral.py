@@ -108,7 +108,7 @@ class TestSoulBehavioralSections:
         assert "Escalation Protocol" in soul
         assert "s2-coordination" in soul
 
-    def test_s1_soul_has_vollzug_protocol(self, tmp_path):
+    def test_s1_soul_has_execution_protocol(self, tmp_path):
         config = transform_assessment(_make_assessment())
         output = generate_openclaw_package(config, tmp_path / "pkg")
         soul = self._read_soul(output, "s1-tourenplanung")

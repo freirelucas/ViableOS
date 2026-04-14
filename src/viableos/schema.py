@@ -512,13 +512,13 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                         "algedonic": _ESCALATION_PATH,
                     },
                 },
-                "vollzug_protocol": {
+                "execution_protocol": {
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
                         "enabled": {"type": "boolean"},
-                        "timeout_quittung": {"type": "string"},
-                        "timeout_vollzug": {"type": "string"},
+                        "timeout_acknowledgment": {"type": "string"},
+                        "timeout_completion": {"type": "string"},
                         "on_timeout": {
                             "type": "string",
                             "enum": ["escalate", "remind", "alert_human"],

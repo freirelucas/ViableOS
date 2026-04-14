@@ -99,24 +99,24 @@ escalation_chains?: {
 
 **Generator Impact:** Every agent gets an "Escalation Protocol" section in SKILL.md with its specific chain.
 
-### 3. System-wide: `vollzug_protocol`
+### 3. System-wide: `execution_protocol`
 
-The four-step control loop according to Pfiffner.
+The Execution Protocol (originally *Vollzug* from Pfiffner's Swiss management theory) — a four-step control loop.
 
 ```typescript
 // In ViableSystem (top-level)
-vollzug_protocol?: {
+execution_protocol?: {
   enabled: boolean;               // true
   steps: ['order', 'acknowledgment', 'execution', 'confirmation'];
-  timeout_quittung: string;       // "30min" — how long to wait for order acknowledgment
-  timeout_vollzug: string;        // "24h" — how long to wait for completion report
+  timeout_acknowledgment: string; // "30min" — how long to wait for order acknowledgment
+  timeout_completion: string;     // "24h" — how long to wait for completion report
   on_timeout: 'escalate' | 'remind' | 'alert_human';
 };
 ```
 
 **Why:** Pfiffner: "Only when we have heard the response do we know what we said." Currently there is no obligation to acknowledge orders or report results. Tasks disappear into the void.
 
-**Generator Impact:** Every S1 agent gets the obligation in SKILL.md: "You respond to every order with an acknowledgment. After completion you send a completion report." S3 agent gets: "Escalate open orders without acknowledgment after {timeout}."
+**Generator Impact:** Every S1 agent gets the obligation in SKILL.md: "You respond to every order with an acknowledgment. After completion you send a completion report." S3 agent gets: "Escalate open orders without acknowledgment after {timeout_acknowledgment}."
 
 ### 4. S1 Unit Extension: `autonomy_levels`
 
@@ -302,7 +302,7 @@ The assessment dialog knows the organization. From this, the transformer can der
 | `operational_modes.crisis.triggers` | `success_criteria` with priority 1 (inversion: if this fails = crisis) |
 | `escalation_chains.operational.timeout` | `team.size` (1-2 people = short timeouts, 10+ = longer) |
 | `escalation_chains.algedonic.triggers` | `identity.never_do` (violation = Algedonic Signal) |
-| `vollzug_protocol.timeout_quittung` | `operational_modes.normal.reporting_frequency` (proportional) |
+| `execution_protocol.timeout_acknowledgment` | `operational_modes.normal.reporting_frequency` (proportional) |
 | `s1.autonomy_levels.needs_approval` | `human_in_the_loop.approval_required` (break down per unit) |
 | `s2.conflict_detection.custom_triggers` | `dependencies` (every dependency = potential conflict) |
 | `s2.transduction_mappings` | `dependencies` + `s1.domain_context` (domain language differences) |
@@ -350,7 +350,7 @@ For **S1** the following is added:
 {needs_approval}
 
 ## Execution Obligation
-You respond to every order with an acknowledgment within {timeout_quittung}.
+You respond to every order with an acknowledgment within {timeout_acknowledgment}.
 After completion you send a completion report.
 Without a completion report the order is considered NOT completed.
 ```
@@ -529,6 +529,6 @@ export interface ViableSystem {
   // NEW:
   operational_modes?: OperationalModes;
   escalation_chains?: EscalationChains;
-  vollzug_protocol?: VollzugProtocol;
+  execution_protocol?: ExecutionProtocol;
 }
 ```
