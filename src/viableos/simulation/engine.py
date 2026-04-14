@@ -15,6 +15,7 @@ from viableos.simulation.agents.s4 import S4Agent
 from viableos.simulation.agents.s5 import S5Agent
 from viableos.simulation.channels import MessageBus
 from viableos.simulation.metrics import VSMDataCollector
+from viableos.simulation.protocols.syntegration import Phase, SyntegrationProtocol
 from viableos.simulation.scheduler import VSMScheduler
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,13 @@ class VSMSimulation(mesa.Model):
         self.environment: dict[str, Any] = {}
         self._llm_fn = llm_fn
 
+        # Syntegration
+        self.active_syntegration: SyntegrationProtocol | None = None
+        self.syntegration_history: list[SyntegrationProtocol] = []
+        self._syntegration_cooldown: int = 0
+
         vs = config.get("viable_system", config)
+        self._syntegration_config = vs.get("syntegration", {})
         self._build_from_config(vs)
 
         self.datacollector = VSMDataCollector(self)
@@ -121,6 +128,26 @@ class VSMSimulation(mesa.Model):
     def step(self) -> None:
         """Advance the simulation by one tick."""
         self.tick += 1
+
+        # Check syntegration triggers (if not already in one, and cooldown expired)
+        if not self.active_syntegration and self._syntegration_cooldown <= 0:
+            self._check_syntegration_triggers()
+
+        # Advance active syntegration (one phase per tick)
+        if self.active_syntegration and self.active_syntegration.is_active:
+            self.active_syntegration.advance(self)
+            if self.active_syntegration.is_complete:
+                self.syntegration_history.append(self.active_syntegration)
+                cooldown = self._parse_duration(
+                    self._syntegration_config.get("cooldown", "50")
+                )
+                self._syntegration_cooldown = cooldown
+                self.active_syntegration = None
+
+        if self._syntegration_cooldown > 0:
+            self._syntegration_cooldown -= 1
+
+        # Normal VSM cycle
         self.scheduler.step(self.tick)
         self.message_bus.deliver()
         self.datacollector.collect(self)
@@ -129,6 +156,39 @@ class VSMSimulation(mesa.Model):
         """Run the simulation for N ticks."""
         for _ in range(ticks):
             self.step()
+
+    # ── Syntegration ──────────────────────────────────────────
+
+    def trigger_syntegration(self, trigger: str, proposed_by: str = "human") -> SyntegrationProtocol:
+        """Manually trigger a Syntegration event."""
+        protocol = SyntegrationProtocol(
+            trigger=trigger,
+            proposed_by=proposed_by,
+            max_topics=self._syntegration_config.get("max_topics", 4),
+            reverberation_cycles=self._syntegration_config.get("reverberation_cycles", 3),
+        )
+        protocol.advance(self)  # PROPOSED → OSI
+        self.active_syntegration = protocol
+        logger.info("Syntegration triggered: %s (by %s)", trigger, proposed_by)
+        return protocol
+
+    def _check_syntegration_triggers(self) -> None:
+        """Evaluate automatic syntegration trigger conditions."""
+        triggers = self._syntegration_config.get("system_triggers", [])
+        if not triggers:
+            return
+
+        fired = SyntegrationProtocol.evaluate_triggers(self, triggers)
+        if fired:
+            self.trigger_syntegration(fired, proposed_by="system")
+
+    @staticmethod
+    def _parse_duration(d: str) -> int:
+        """Parse a duration string to tick count. Simple: just return int or default."""
+        try:
+            return int(d)
+        except (ValueError, TypeError):
+            return 50  # default cooldown
 
     # ── Mode Management ───────────────────────────────────────
 

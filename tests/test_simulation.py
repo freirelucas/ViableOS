@@ -319,3 +319,125 @@ class TestFullSimulation:
         # Verify data collection works
         df = sim.datacollector.get_model_vars_dataframe()
         assert len(df) == 50
+
+
+# ── Syntegration Protocol ─────────────────────────────────────
+
+
+from viableos.simulation.protocols.syntegration import (
+    Phase,
+    SyntegrationProtocol,
+)
+
+
+class TestSyntegrationProtocol:
+    def test_manual_trigger(self):
+        """Manually triggering a syntegration initializes participants."""
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("research_agenda_review")
+        assert protocol.phase == Phase.OSI
+        assert len(protocol.participants) == 7  # 2 S1 + 5 meta
+        assert protocol.trigger == "research_agenda_review"
+
+    def test_full_protocol_runs_all_phases(self):
+        """Running advance() 8 times goes through all phases to COMPLETED."""
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+
+        phases_seen = [protocol.phase]
+        for _ in range(7):  # OSI → JOSTLE → AUCTION → R1 → R2 → R3 → RESOLUTION → COMPLETED
+            protocol.advance(sim)
+            phases_seen.append(protocol.phase)
+
+        assert Phase.OSI in phases_seen
+        assert Phase.JOSTLE in phases_seen
+        assert Phase.AUCTION in phases_seen
+        assert Phase.REVERB_1 in phases_seen
+        assert Phase.REVERB_2 in phases_seen
+        assert Phase.REVERB_3 in phases_seen
+        assert Phase.RESOLUTION in phases_seen
+        assert Phase.COMPLETED in phases_seen
+        assert protocol.is_complete
+
+    def test_osi_collects_statements(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        # After trigger, we're in OSI. Advance to JOSTLE.
+        protocol.advance(sim)
+        assert len(protocol.importance_statements) == 7
+
+    def test_jostle_produces_topics(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        protocol.advance(sim)  # OSI → JOSTLE
+        protocol.advance(sim)  # JOSTLE → AUCTION
+        assert len(protocol.topics) >= 2
+
+    def test_auction_assigns_roles(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        for _ in range(3):  # → OSI → JOSTLE → AUCTION
+            protocol.advance(sim)
+        # Now in REVERB_1, roles should be assigned
+        assert len(protocol.roles) == 7
+        for agent_name, roles in protocol.roles.items():
+            assert len(roles) >= 1
+            assert roles[0]["role"] in ("player", "critic")
+
+    def test_reverberation_produces_log(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        for _ in range(6):  # through all 3 reverb cycles
+            protocol.advance(sim)
+        assert len(protocol.reverberation_log) == 3
+
+    def test_resolution_produces_outcomes(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        for _ in range(7):  # all the way to COMPLETED
+            protocol.advance(sim)
+        assert len(protocol.outcomes) >= 2
+        assert protocol.outcomes[0].topic in protocol.topics
+        assert protocol.outcomes[0].players  # has player assignments
+
+    def test_completed_protocol_is_archived(self):
+        """Completed syntegration moves to history."""
+        sim = VSMSimulation(_minimal_config())
+        sim.trigger_syntegration("test")
+        # Run enough ticks for the protocol to complete (1 phase per tick)
+        sim.run(10)
+        assert sim.active_syntegration is None
+        assert len(sim.syntegration_history) == 1
+        assert sim.syntegration_history[0].is_complete
+
+    def test_cooldown_prevents_immediate_retrigger(self):
+        """After a syntegration completes, cooldown prevents another."""
+        sim = VSMSimulation(_minimal_config())
+        sim._syntegration_config = {"cooldown": "5", "system_triggers": []}
+        sim.trigger_syntegration("first")
+        sim.run(10)  # complete first
+        assert len(sim.syntegration_history) == 1
+        assert sim._syntegration_cooldown > 0
+
+    def test_engine_step_advances_syntegration(self):
+        """The engine's step() method automatically advances the protocol."""
+        sim = VSMSimulation(_minimal_config())
+        sim.trigger_syntegration("via_engine")
+        initial_phase = sim.active_syntegration.phase
+        sim.step()
+        assert sim.active_syntegration.phase != initial_phase
+
+    def test_auto_trigger_from_s4_signals(self):
+        """System auto-triggers syntegration when S4 detects enough signals."""
+        sim = VSMSimulation(_minimal_config())
+        sim._syntegration_config = {
+            "system_triggers": [
+                {"condition": "s4_converging_signals", "threshold": 3},
+            ],
+        }
+        # Manually set S4's signal count above threshold
+        s4 = next(a for a in sim.scheduler.agents if a.system_level == "s4")
+        s4.signals_detected = 5
+        sim.step()
+        assert sim.active_syntegration is not None
+        assert sim.active_syntegration.trigger == "s4_converging_signals"
