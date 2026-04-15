@@ -38,7 +38,7 @@ class Environment:
 
     def __init__(self, scenario: list[dict[str, Any]] | None = None) -> None:
         self._events: list[EnvironmentEvent] = []
-        self._active_signals: list[EnvironmentEvent] = []
+        self._pending_signals: list[EnvironmentEvent] = []
         self._history: list[EnvironmentEvent] = []
 
         if scenario:
@@ -48,7 +48,7 @@ class Environment:
 
     @property
     def new_signals(self) -> list[dict[str, Any]]:
-        """Current tick's active signals (consumed by S4 agent)."""
+        """Pending signals (buffered until consumed by S4 agent)."""
         return [
             {
                 "category": e.category,
@@ -56,13 +56,19 @@ class Environment:
                 "description": e.description,
                 "relevance": e.relevance,
             }
-            for e in self._active_signals
+            for e in self._pending_signals
         ]
 
+    def consume_signals(self) -> list[dict[str, Any]]:
+        """Consume and clear pending signals. Called by S4 when it activates."""
+        signals = self.new_signals
+        self._pending_signals.clear()
+        return signals
+
     def step(self, tick: int) -> list[EnvironmentEvent]:
-        """Advance environment to this tick. Returns new events."""
+        """Advance environment to this tick. Buffers new events as pending signals."""
         new_events = [e for e in self._events if e.tick == tick]
-        self._active_signals = new_events
+        self._pending_signals.extend(new_events)  # buffer, not replace
         self._history.extend(new_events)
         return new_events
 

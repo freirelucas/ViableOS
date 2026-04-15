@@ -35,10 +35,47 @@ class S3Agent(VSMAgent):
         # Update beliefs with current system state
         self.beliefs["escalation_count"] = len(escalations)
         self.beliefs["status_reports"] = len(status_reports)
-
-        # Generate periodic report
         self.reports_generated += 1
         self.beliefs["last_report_tick"] = self.model.tick
+
+        # ── The S3→S2→S1 directive loop ──
+        # S3 issues work directives to S1 units via S2 (the resource bargain).
+        # Each activation, S3 picks an S1 unit and assigns a task based on
+        # environment signals and current needs.
+        s1_agents = [
+            a for a in self.model.agents
+            if getattr(a, "system_level", "") == "s1"
+        ]
+        s2_name = self._find_agent("s2")
+
+        # Check if S4 has detected signals we should act on
+        s4_signals = self.beliefs.get("s4_intelligence", [])
+        for msg in self.inbox:
+            if msg.sender_level == "s4" or (msg.sender_level == "s5" and "intelligence" in msg.content.lower()):
+                s4_signals.append(msg.content)
+        self.beliefs["s4_intelligence"] = s4_signals[-5:]  # keep last 5
+
+        # Round-robin directives to S1 units
+        if s1_agents:
+            target_idx = self.reports_generated % len(s1_agents)
+            target = s1_agents[target_idx]
+
+            # Build directive based on what we know
+            if s4_signals:
+                latest_signal = s4_signals[-1][:80]
+                directive = f"Analyze and respond to: {latest_signal}"
+            else:
+                directive = f"Continue routine work on: {target.purpose[:60]}"
+
+            self.send_message(
+                receiver=s2_name,
+                receiver_level="s2",
+                performative="request",
+                content=directive,
+                protocol="coordination",
+            )
+            # Tell S2 which S1 to route this to
+            self.outbox[-1].metadata["target_s1"] = target.name
 
         # If escalations detected, consider mode switch
         if len(escalations) >= 3:

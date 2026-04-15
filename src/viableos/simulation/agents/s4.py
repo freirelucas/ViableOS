@@ -35,7 +35,9 @@ class S4Agent(VSMAgent):
         """Scan environment model and generate intelligence."""
         env = getattr(self.model, "environment", None)
         new_signals: list[dict] = []
-        if env is not None and hasattr(env, "new_signals"):
+        if env is not None and hasattr(env, "consume_signals"):
+            new_signals = env.consume_signals()  # consume clears the buffer
+        elif env is not None and hasattr(env, "new_signals"):
             new_signals = env.new_signals
         elif isinstance(env, dict):
             new_signals = env.get("new_signals", [])

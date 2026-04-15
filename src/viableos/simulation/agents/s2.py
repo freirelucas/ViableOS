@@ -44,6 +44,16 @@ class S2Agent(VSMAgent):
                 s1_statuses[msg.sender] = msg.content
                 self.messages_routed += 1
 
+                # Forward S1 reports to S3 (the upward channel)
+                s3_name = self._find_s3_name()
+                self.send_message(
+                    receiver=s3_name,
+                    receiver_level="s3",
+                    performative="inform",
+                    content=f"[{msg.sender}] {msg.content}",
+                    protocol="coordination",
+                )
+
             elif msg.sender_level == "s3" and msg.performative == "request":
                 # S3 directive → route to target S1
                 target = msg.metadata.get("target_s1", "")
@@ -75,13 +85,15 @@ class S2Agent(VSMAgent):
         overlap = words_a & words_b - {"status:", "working", "on", "the", "a", "an"}
         return len(overlap) >= 3
 
-    def _escalate_to_s3(self, reason: str) -> None:
-        """Escalate a coordination issue to S3."""
-        s3_name = "s3_optimizer"
+    def _find_s3_name(self) -> str:
         for agent in self.model.agents:
             if getattr(agent, "system_level", "") == "s3":
-                s3_name = agent.name
-                break
+                return agent.name
+        return "s3_optimizer"
+
+    def _escalate_to_s3(self, reason: str) -> None:
+        """Escalate a coordination issue to S3."""
+        s3_name = self._find_s3_name()
         self.send_message(
             receiver=s3_name,
             receiver_level="s3",
