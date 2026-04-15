@@ -441,3 +441,210 @@ class TestSyntegrationProtocol:
         sim.step()
         assert sim.active_syntegration is not None
         assert sim.active_syntegration.trigger == "s4_converging_signals"
+
+
+# ── Environment Model ─────────────────────────────────────────
+
+
+from viableos.simulation.environment import (
+    Environment,
+    EnvironmentEvent,
+    minimal_scenario,
+    policy_research_scenario,
+)
+
+
+class TestEnvironment:
+    def test_minimal_scenario_has_events(self):
+        events = minimal_scenario(100)
+        assert len(events) >= 3
+
+    def test_policy_research_scenario(self):
+        events = policy_research_scenario(100)
+        assert len(events) >= 10
+        categories = {e["category"] for e in events}
+        assert "legislation" in categories
+        assert "crisis" in categories
+
+    def test_environment_step_delivers_events(self):
+        env = Environment([
+            {"tick": 5, "category": "test", "title": "Event A", "description": "Desc", "relevance": 3},
+            {"tick": 10, "category": "test", "title": "Event B", "description": "Desc", "relevance": 4},
+        ])
+        new = env.step(5)
+        assert len(new) == 1
+        assert new[0].title == "Event A"
+        assert len(env.new_signals) == 1
+
+    def test_no_events_on_empty_tick(self):
+        env = Environment([
+            {"tick": 5, "category": "test", "title": "X", "description": "D", "relevance": 3},
+        ])
+        new = env.step(3)
+        assert len(new) == 0
+
+    def test_s4_detects_environment_signals(self):
+        """S4 agent picks up signals from the environment."""
+        sim = VSMSimulation(
+            _minimal_config(),
+            scenario=[
+                {"tick": 4, "category": "legislation", "title": "New law", "description": "Important", "relevance": 4},
+            ],
+        )
+        sim.run(10)
+        s4 = next(a for a in sim.scheduler.agents if a.system_level == "s4")
+        assert s4.signals_detected >= 1
+
+    def test_critical_signal_reaches_s5_as_alert(self):
+        """Relevance>=5 signals generate algedonic alerts to S5."""
+        sim = VSMSimulation(
+            _minimal_config(),
+            scenario=[
+                {"tick": 4, "category": "crisis", "title": "Data breach", "description": "Critical", "relevance": 5},
+            ],
+        )
+        sim.run(10)
+        assert sim.message_bus.algedonic_count >= 1
+
+    def test_inject_event_dynamically(self):
+        env = Environment([])
+        env.inject_event(EnvironmentEvent(tick=3, category="test", title="Dynamic", description="Injected", relevance=3))
+        new = env.step(3)
+        assert len(new) == 1
+        assert new[0].title == "Dynamic"
+
+
+# ── LLM Deliberation ─────────────────────────────────────────
+
+
+class TestLLMDeliberation:
+    def test_s1_with_mock_llm(self):
+        """S1 agent uses llm_fn when provided."""
+        calls = []
+
+        def mock_llm(prompt: str) -> str:
+            calls.append(prompt)
+            return "Analyzed legislation and produced briefing"
+
+        sim = VSMSimulation(_minimal_config(), llm_fn=mock_llm)
+
+        # Give S1 a task
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        sim.message_bus._mailboxes[s1.name].append(
+            Message(
+                sender="s3_optimizer", sender_level="s3",
+                receiver=s1.name, receiver_level="s1",
+                performative="request", content="Analyze new legislation",
+            )
+        )
+
+        sim.run(4)
+        assert len(calls) >= 1
+        assert s1.tasks_completed >= 1
+        assert "last_output" in s1.beliefs
+
+    def test_s1_without_llm_still_works(self):
+        """S1 agent works without LLM (fallback heuristic)."""
+        sim = VSMSimulation(_minimal_config())
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        sim.message_bus._mailboxes[s1.name].append(
+            Message(
+                sender="s3_optimizer", sender_level="s3",
+                receiver=s1.name, receiver_level="s1",
+                performative="request", content="Do work",
+            )
+        )
+        sim.run(4)
+        assert s1.tasks_completed >= 1
+
+    def test_llm_failure_graceful(self):
+        """LLM failure doesn't crash the simulation."""
+        def failing_llm(prompt: str) -> str:
+            raise RuntimeError("LLM unavailable")
+
+        sim = VSMSimulation(_minimal_config(), llm_fn=failing_llm)
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        sim.message_bus._mailboxes[s1.name].append(
+            Message(
+                sender="s3_optimizer", sender_level="s3",
+                receiver=s1.name, receiver_level="s1",
+                performative="request", content="Task",
+            )
+        )
+        sim.run(4)  # Should not crash
+        assert s1.tasks_completed >= 1
+
+
+# ── API Endpoint ──────────────────────────────────────────────
+
+
+from fastapi.testclient import TestClient
+from viableos.api.main import app
+
+client = TestClient(app)
+
+
+class TestSimulationAPI:
+    def test_run_simulation(self):
+        resp = client.post("/api/simulate", json={
+            "config": _minimal_config(),
+            "ticks": 20,
+            "scenario": "minimal",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ticks_run"] == 20
+        assert len(data["agents"]) == 7
+        assert data["messages_blocked"] == 0
+
+    def test_with_syntegration_trigger(self):
+        resp = client.post("/api/simulate", json={
+            "config": _minimal_config(),
+            "ticks": 30,
+            "scenario": "minimal",
+            "trigger_syntegration_at": 5,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["syntegrations_completed"] >= 1
+        assert len(data["syntegration_history"]) >= 1
+        assert data["syntegration_history"][0]["phase"] == "completed"
+
+    def test_metrics_returned(self):
+        resp = client.post("/api/simulate", json={
+            "config": _minimal_config(),
+            "ticks": 10,
+            "scenario": "none",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["metrics"]) == 10
+        assert data["metrics"][0]["tick"] == 1
+
+    def test_invalid_config_rejected(self):
+        resp = client.post("/api/simulate", json={
+            "config": {"bad": "config"},
+            "ticks": 10,
+        })
+        assert resp.status_code == 422
+
+    def test_policy_research_scenario(self):
+        """Full simulation with policy research template."""
+        import yaml
+        from pathlib import Path
+
+        template = Path("src/viableos/templates/policy-research.yaml")
+        if not template.exists():
+            pytest.skip("Template not found")
+
+        config = yaml.safe_load(template.read_text())
+        resp = client.post("/api/simulate", json={
+            "config": config,
+            "ticks": 50,
+            "scenario": "policy_research",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ticks_run"] == 50
+        assert len(data["agents"]) == 9  # 4 S1 + 5 meta
+        assert data["environment_events_total"] > 0

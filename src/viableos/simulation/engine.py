@@ -14,6 +14,7 @@ from viableos.simulation.agents.s3star import S3StarAgent
 from viableos.simulation.agents.s4 import S4Agent
 from viableos.simulation.agents.s5 import S5Agent
 from viableos.simulation.channels import MessageBus
+from viableos.simulation.environment import Environment, policy_research_scenario
 from viableos.simulation.metrics import VSMDataCollector
 from viableos.simulation.protocols.syntegration import Phase, SyntegrationProtocol
 from viableos.simulation.scheduler import VSMScheduler
@@ -34,13 +35,14 @@ class VSMSimulation(mesa.Model):
         config: dict[str, Any],
         *,
         llm_fn: Callable[..., str] | None = None,
+        scenario: list[dict[str, Any]] | None = None,
+        ticks: int = 100,
     ) -> None:
         super().__init__()
         self.tick: int = 0
         self.mode: str = "normal"
         self.message_bus = MessageBus()
         self.scheduler = VSMScheduler()
-        self.environment: dict[str, Any] = {}
         self._llm_fn = llm_fn
 
         # Syntegration
@@ -50,6 +52,11 @@ class VSMSimulation(mesa.Model):
 
         vs = config.get("viable_system", config)
         self._syntegration_config = vs.get("syntegration", {})
+
+        # Environment (scenario-driven or empty)
+        scenario_events = scenario or policy_research_scenario(ticks)
+        self.environment = Environment(scenario_events)
+
         self._build_from_config(vs)
 
         self.datacollector = VSMDataCollector(self)
@@ -128,6 +135,9 @@ class VSMSimulation(mesa.Model):
     def step(self) -> None:
         """Advance the simulation by one tick."""
         self.tick += 1
+
+        # Advance environment (produces new signals for S4 to observe)
+        self.environment.step(self.tick)
 
         # Check syntegration triggers (if not already in one, and cooldown expired)
         if not self.active_syntegration and self._syntegration_cooldown <= 0:

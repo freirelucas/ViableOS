@@ -33,25 +33,47 @@ class S4Agent(VSMAgent):
 
     def deliberate(self) -> None:
         """Scan environment model and generate intelligence."""
-        # Check environment for changes (simulated)
-        env = getattr(self.model, "environment", {})
-        new_signals = env.get("new_signals", []) if isinstance(env, dict) else []
+        env = getattr(self.model, "environment", None)
+        new_signals: list[dict] = []
+        if env is not None and hasattr(env, "new_signals"):
+            new_signals = env.new_signals
+        elif isinstance(env, dict):
+            new_signals = env.get("new_signals", [])
 
         if new_signals:
             self.signals_detected += len(new_signals)
             self.beliefs["recent_signals"] = new_signals
 
+            # High-relevance signals get sent as alerts
+            critical = [s for s in new_signals if s.get("relevance", 0) >= 5]
+            if critical:
+                for sig in critical:
+                    self.send_message(
+                        receiver=self._find_agent("s5"),
+                        receiver_level="s5",
+                        performative="alert",
+                        content=f"CRITICAL: {sig['title']} — {sig['description']}",
+                        protocol="algedonic",
+                    )
+
         # Send periodic strategic brief to S5
         self.briefs_sent += 1
+        brief_content = (
+            f"Strategic brief (tick {self.model.tick}): "
+            f"{self.signals_detected} signals detected, "
+            f"monitoring {len(self.competitors)} competitors, "
+            f"{len(self.technology)} tech trends, "
+            f"{len(self.regulation)} regulation items"
+        )
+        if new_signals:
+            titles = [s.get("title", "?") for s in new_signals[:3]]
+            brief_content += f" | New: {'; '.join(titles)}"
+
         self.send_message(
             receiver=self._find_agent("s5"),
             receiver_level="s5",
             performative="inform",
-            content=f"Strategic brief (tick {self.model.tick}): "
-                    f"{self.signals_detected} signals detected, "
-                    f"monitoring {len(self.competitors)} competitors, "
-                    f"{len(self.technology)} tech trends, "
-                    f"{len(self.regulation)} regulation items",
+            content=brief_content,
             protocol="coordination",
         )
 

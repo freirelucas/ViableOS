@@ -36,17 +36,40 @@ class S1Agent(VSMAgent):
                 self.current_plan = f"Execute: {msg.content}"
                 self.beliefs["active_task"] = msg.content
 
-        # If we have a plan, report progress to S2
+        # If we have a plan, use LLM for execution (if available)
         if self.current_plan:
+            llm_result = self._llm_deliberate(
+                f"You received a task: '{self.current_plan}'. "
+                f"Describe briefly (1-2 sentences) what you would do and what the output would be."
+            )
+            status = llm_result or f"Completed: '{self.current_plan}'"
+
             self.send_message(
                 receiver=self._find_s2_name(),
                 receiver_level="s2",
                 performative="inform",
-                content=f"Status: working on '{self.current_plan}'",
+                content=f"Status: {status}",
                 protocol="coordination",
             )
+            self.beliefs["last_output"] = status
             self.tasks_completed += 1
             self.current_plan = None
+        elif self.llm_fn and self.model.tick % 10 == 0:
+            # Periodic autonomous work (every 10 ticks if LLM available)
+            llm_result = self._llm_deliberate(
+                f"Given your purpose ('{self.purpose}'), what proactive "
+                f"work should you do right now? Be specific and brief."
+            )
+            if llm_result:
+                self.send_message(
+                    receiver=self._find_s2_name(),
+                    receiver_level="s2",
+                    performative="inform",
+                    content=f"Proactive output: {llm_result}",
+                    protocol="coordination",
+                )
+                self.beliefs["last_output"] = llm_result
+                self.tasks_completed += 1
 
     def _find_s2_name(self) -> str:
         """Find the S2 coordinator agent name."""

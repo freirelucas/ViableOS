@@ -79,6 +79,35 @@ class VSMAgent(mesa.Agent):
         # Default: no-op. Subclasses implement LLM-based or rule-based logic.
         pass
 
+    def _llm_deliberate(self, task_prompt: str) -> str | None:
+        """Call the LLM for deliberation. Returns response or None if no LLM."""
+        if not self.llm_fn:
+            return None
+
+        context = (
+            f"You are {self.name} ({self.system_level.upper()}).\n"
+            f"Purpose: {self.purpose}\n"
+            f"Current tick: {self.model.tick}\n"
+            f"Mode: {self.model.mode}\n"
+        )
+        if self.beliefs:
+            beliefs_str = "\n".join(f"- {k}: {v}" for k, v in list(self.beliefs.items())[:5])
+            context += f"\nCurrent beliefs:\n{beliefs_str}\n"
+        if self.inbox:
+            msgs_str = "\n".join(
+                f"- [{m.performative}] from {m.sender}: {m.content[:100]}"
+                for m in self.inbox[:5]
+            )
+            context += f"\nInbox:\n{msgs_str}\n"
+
+        full_prompt = f"{context}\nTask: {task_prompt}"
+
+        try:
+            return self.llm_fn(full_prompt)
+        except Exception as exc:
+            logger.warning("LLM call failed for %s: %s", self.name, exc)
+            return None
+
     def act(self) -> None:
         """Execute plan and send outbox messages."""
         for msg in self.outbox:
