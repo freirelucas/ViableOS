@@ -4,11 +4,11 @@
   "features": {
     "ghcr.io/devcontainers/features/node:1": { "version": "20" }
   },
-  "postCreateCommand": "pip install -e '.[dev]' && cd frontend && npm install",
-  "postStartCommand": "uvicorn viableos.api.main:app --host 0.0.0.0 --port 8000 & cd frontend && npm run dev -- --host 0.0.0.0 &",
+  "postCreateCommand": "pip install -e . && cd frontend && npm install",
+  "postStartCommand": "nohup bash .devcontainer/start.sh > /tmp/viableos.log 2>&1 &",
   "forwardPorts": [5173, 8000],
   "portsAttributes": {
     "5173": { "label": "ViableOS", "onAutoForward": "openBrowser" },
-    "8000": { "label": "API" }
+    "8000": { "label": "API", "onAutoForward": "silent" }
   }
 }
