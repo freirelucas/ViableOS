@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from viableos.api.routes import router
 from viableos.api.chat_routes import chat_router
 from viableos.api.ops_routes import ops_router
+from viableos.api.simulation_routes import sim_router
 
 app = FastAPI(
     title="ViableOS API",
@@ -26,6 +27,7 @@ app.add_middleware(
 app.include_router(router)
 app.include_router(chat_router)
 app.include_router(ops_router)
+app.include_router(sim_router)
 
 
 @app.get("/health")

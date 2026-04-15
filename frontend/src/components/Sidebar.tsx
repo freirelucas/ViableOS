@@ -1,15 +1,16 @@
-import { MessageSquare, Wand2, LayoutDashboard, Radio, RotateCcw } from 'lucide-react';
+import { MessageSquare, Wand2, LayoutDashboard, Radio, Play, RotateCcw } from 'lucide-react';
 import { useConfigStore } from '../store/useConfigStore';
 import { useChatStore } from '../store/useChatStore';
 import { useOpsStore } from '../store/useOpsStore';
 
-type View = 'chat' | 'wizard' | 'dashboard' | 'opsroom';
+type View = 'chat' | 'wizard' | 'dashboard' | 'opsroom' | 'simulation';
 
 const NAV_ITEMS: { key: View; label: string; icon: typeof MessageSquare }[] = [
   { key: 'chat', label: 'Chat', icon: MessageSquare },
   { key: 'wizard', label: 'Wizard', icon: Wand2 },
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'opsroom', label: 'Ops Room', icon: Radio },
+  { key: 'simulation', label: 'Simulate', icon: Play },
 ];
 
 export function Sidebar() {

@@ -321,6 +321,7 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                             "model": {"type": "string"},
                             "weight": {"type": "number", "minimum": 1, "maximum": 10},
                             "domain_context": {"type": "string"},
+                            "persona": {"type": "string"},
                             "sub_units": {
                                 "type": "array",
                                 "items": {
@@ -389,6 +390,7 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                         "resource_allocation": {"type": "string"},
                         "kpi_list": _STRING_ARRAY,
                         "label": {"type": "string"},
+                        "decision_principles": _STRING_ARRAY,
                         "triple_index": _TRIPLE_INDEX,
                         "deviation_logic": _DEVIATION_LOGIC,
                         "intervention_authority": _INTERVENTION_AUTHORITY,
@@ -510,16 +512,34 @@ VIABLEOS_SCHEMA: dict[str, Any] = {
                         "algedonic": _ESCALATION_PATH,
                     },
                 },
-                "vollzug_protocol": {
+                "execution_protocol": {
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
                         "enabled": {"type": "boolean"},
-                        "timeout_quittung": {"type": "string"},
-                        "timeout_vollzug": {"type": "string"},
+                        "timeout_acknowledgment": {"type": "string"},
+                        "timeout_completion": {"type": "string"},
                         "on_timeout": {
                             "type": "string",
                             "enum": ["escalate", "remind", "alert_human"],
+                        },
+                    },
+                },
+                "persona_source": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "dspace_url": {"type": "string"},
+                        "ipeapub_url": {"type": "string"},
+                        "cache_dir": {"type": "string"},
+                        "cache_max_age_hours": {
+                            "type": "number",
+                            "minimum": 0,
+                        },
+                        "max_tokens": {
+                            "type": "number",
+                            "minimum": 100,
+                            "maximum": 3000,
                         },
                     },
                 },

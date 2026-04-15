@@ -87,4 +87,48 @@ export const api = {
   opsDecisions: () => get<Array<Record<string, unknown>>>('/ops/decisions'),
   opsResolveDecision: (id: string, action: string) =>
     post<Record<string, unknown>>(`/ops/decisions/${id}/resolve`, { action }),
+
+  // Simulation
+  runSimulation: (config: Config, ticks: number, scenario: string, triggerSyntegrationAt?: number) =>
+    post<SimulationResult>('/simulate', {
+      config,
+      ticks,
+      scenario,
+      trigger_syntegration_at: triggerSyntegrationAt,
+    }),
 };
+
+// Simulation response types
+export interface AgentSnapshot {
+  name: string;
+  system_level: string;
+  step_count: number;
+  tasks_completed: number;
+  beliefs_count: number;
+  inbox_size: number;
+}
+
+export interface SyntegrationSnapshot {
+  id: string;
+  trigger: string;
+  proposed_by: string;
+  phase: string;
+  topics: string[];
+  outcomes_count: number;
+  started_at_tick: number;
+  completed_at_tick: number | null;
+}
+
+export interface SimulationResult {
+  ticks_run: number;
+  mode: string;
+  agents: AgentSnapshot[];
+  messages_sent: number;
+  messages_delivered: number;
+  messages_blocked: number;
+  algedonic_signals: number;
+  environment_events_total: number;
+  syntegrations_completed: number;
+  syntegration_history: SyntegrationSnapshot[];
+  metrics: Array<Record<string, unknown>>;
+}

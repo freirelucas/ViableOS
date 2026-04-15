@@ -1,19 +1,19 @@
 import { describe, it, expect } from 'vitest';
 
 /**
- * Beispiel Unit Tests für ViableOS React-Komponenten
+ * Example Unit Tests for ViableOS React components
  *
- * Anpassen: Importiere deine eigenen Komponenten
+ * Customize: Import your own components
  * import { ChatWindow } from '@/components/chat/ChatWindow';
  * import { useChatStore } from '@/store/useChatStore';
  */
 
-describe('Beispiel Komponenten-Test', () => {
-  it('sollte als Template dienen - ersetze mit deinen Tests', () => {
-    // Beispiel:
+describe('Example Component Test', () => {
+  it('should serve as a template - replace with your tests', () => {
+    // Example:
     //
     // render(<ChatWindow />);
-    // const input = screen.getByPlaceholderText('Nachricht eingeben...');
+    // const input = screen.getByPlaceholderText('Enter message...');
     // expect(input).toBeInTheDocument();
 
     expect(true).toBe(true); // Placeholder

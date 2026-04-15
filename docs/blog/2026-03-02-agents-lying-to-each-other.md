@@ -79,21 +79,21 @@ LLMs don't have persistent memory. Everything lives in the context window — a 
 
 The agent doesn't refuse the directive. It doesn't disagree. It simply *forgets it existed*.
 
-In a human organization, this is the memo that nobody read. The policy that got announced but never enforced. The quarterly goal that was abandoned by February. Stafford Beer saw this problem 50 years ago and his solution had a name: **Vollzug**.
+In a human organization, this is the memo that nobody read. The policy that got announced but never enforced. The quarterly goal that was abandoned by February. Stafford Beer saw this problem 50 years ago and his solution had a name: the **Execution Protocol** (German: *Vollzug*).
 
-*Vollzug* is German for the confirmed execution of a directive. Not "I heard you" — but "I heard you, I did it, and here's proof." Beer was a British cyberneticist, but he borrowed the German term because English doesn't have a single word for this concept. Three steps, each with a hard timeout:
+*Vollzug* is German for the confirmed execution of a directive. Not "I heard you" — but "I heard you, I did it, and here's proof." Beer was a British cyberneticist who borrowed the German term because English doesn't have a single word for this concept. We call it the Execution Protocol. Three steps, each with a hard timeout:
 
 ```yaml
-vollzug_protocol:
+execution_protocol:
   enabled: true
-  timeout_quittung: 30min    # Must acknowledge within 30 min
-  timeout_vollzug: 48h       # Must execute within 48 hours
-  on_timeout: escalate       # Auto-escalate if missed
+  timeout_acknowledgment: 30min    # Must acknowledge within 30 min
+  timeout_completion: 48h          # Must execute within 48 hours
+  on_timeout: escalate             # Auto-escalate if missed
 ```
 
-**Step 1 — Quittung (Acknowledgment).** The receiving agent has 30 minutes to confirm receipt. No confirmation → auto-escalate. This catches the case where a directive is sent but never enters the agent's active context.
+**Step 1 — Acknowledgment.** The receiving agent has 30 minutes to confirm receipt. No confirmation → auto-escalate. This catches the case where a directive is sent but never enters the agent's active context.
 
-**Step 2 — Vollzug (Execution).** The agent has 48 hours to carry out the directive. The timeout scales with team size — a 2-person org gets 12 hours, a 10-person org gets a full week.
+**Step 2 — Execution.** The agent has 48 hours to carry out the directive. The timeout scales with team size — a 2-person org gets 12 hours, a 10-person org gets a full week.
 
 **Step 3 — Report.** Confirm completion with evidence. Not "done" — but "done, and here's what changed."
 
@@ -119,7 +119,7 @@ An operational timeout goes through coordination first. A quality issue goes str
 
 This is what "from topology to behavior" means. It's not enough to define which agents exist. You need to define how they behave when things go wrong. When context is lost. When directives are ignored. When the whole system is on fire. That's the gap between a diagram and an operating system.
 
-And here's why this matters specifically for LLM-based agents: LLMs are *optimized to produce coherent, confident outputs*. An agent reporting "task completed" sounds exactly like an agent that actually completed the task — and one that hallucinated the completion. Without Vollzug, without S3* audit, without escalation chains — you have no way to tell the difference.
+And here's why this matters specifically for LLM-based agents: LLMs are *optimized to produce coherent, confident outputs*. An agent reporting "task completed" sounds exactly like an agent that actually completed the task — and one that hallucinated the completion. Without execution tracking, without S3* audit, without escalation chains — you have no way to tell the difference.
 
 ## What We've Built
 
@@ -130,7 +130,7 @@ And here's why this matters specifically for LLM-based agents: LLMs are *optimiz
 - **AI-guided assessment interview** — Chat with a VSM expert that asks the right questions and auto-generates a complete config
 - **6-step web wizard** with 12 organization templates (SaaS, E-Commerce, Agency, Consulting, Law Firm, Education, and more)
 - **Budget calculator** mapping monthly USD to per-agent model allocations across 23 models and 7 providers
-- **Assessment transformer** that auto-derives all 9 behavioral spec areas from your assessment data — team size, external forces, success criteria, dependencies → operational modes, escalation chains, vollzug protocol, autonomy matrix, provider constraints, everything
+- **Assessment transformer** that auto-derives all 9 behavioral spec areas from your assessment data — team size, external forces, success criteria, dependencies → operational modes, escalation chains, execution protocol, autonomy matrix, provider constraints, everything
 - **Package generator** producing SOUL.md, SKILL.md, HEARTBEAT.md per agent, plus coordination rules, permission matrices, and fallback chains
 - **LangGraph export** for direct integration
 - **Viability checker** with VSM completeness checks and behavioral spec validation
@@ -142,7 +142,7 @@ Small team (1-2 people) → shorter timeouts, more human approval, daily reporti
 
 **What we haven't built yet:**
 
-The runtime engine. ViableOS currently generates the *configuration* for a viable agent organization. It doesn't yet *execute* it. There's no live enforcement of vollzug timeouts, no real-time escalation routing, no Operations Room. That's v0.3 — and it's where I need help.
+The runtime engine. ViableOS currently generates the *configuration* for a viable agent organization. It doesn't yet *execute* it. There's no live enforcement of execution protocol timeouts, no real-time escalation routing, no Operations Room. That's v0.3 — and it's where I need help.
 
 ## First Test: My Own Healthcare Software Company
 
@@ -152,7 +152,7 @@ It's a good test case for three reasons:
 
 **The domain is regulated.** GDPR, healthcare data laws, documentation requirements. This forces the system to take identity and values seriously — "patient privacy above everything" isn't a nice-to-have, it's legally required. S5 (Identity) earns its keep here. And S3* audit with a different LLM provider isn't theoretical elegance — it's practical necessity when agents touch patient-adjacent workflows.
 
-**The stakes are real.** When agents handle scheduling, documentation, or billing, hallucinations aren't just annoying — they're potentially harmful. The Vollzug Protocol isn't academic neatness. It's "did you actually update that patient record, or did you just tell me you did?"
+**The stakes are real.** When agents handle scheduling, documentation, or billing, hallucinations aren't just annoying — they're potentially harmful. The Execution Protocol isn't academic neatness. It's "did you actually update that patient record, or did you just tell me you did?"
 
 **It's small enough to be honest about.** Solo founder, small team. If ViableOS generates reasonable defaults for an organization this size, and if those defaults actually change agent behavior in practice, that's validation. If they don't — that's equally valuable information. I'll document the entire process publicly.
 

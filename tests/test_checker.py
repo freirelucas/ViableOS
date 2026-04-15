@@ -296,10 +296,10 @@ class TestBehavioralSpecWarnings:
                     "strategic": {"path": ["s4", "s5", "human"], "timeout_per_step": "4h"},
                     "algedonic": {"path": ["s5", "human"], "timeout_per_step": "15min"},
                 },
-                "vollzug_protocol": {
+                "execution_protocol": {
                     "enabled": True,
-                    "timeout_quittung": "30min",
-                    "timeout_vollzug": "48h",
+                    "timeout_acknowledgment": "30min",
+                    "timeout_completion": "48h",
                     "on_timeout": "escalate",
                 },
             }
@@ -396,11 +396,11 @@ class TestBehavioralSpecWarnings:
         assert any("algedonic" in w.message.lower() and "escalation" in w.message.lower()
                     for w in warnings)
 
-    def test_vollzug_disabled_info(self):
-        """Vollzug protocol not enabled → info."""
+    def test_execution_protocol_disabled_info(self):
+        """Execution protocol not enabled → info."""
         config = {
             "viable_system": {
-                "name": "NoVollzug",
+                "name": "NoExecution",
                 "identity": {"purpose": "Test"},
                 "system_1": [{"name": "A", "purpose": "a"}],
                 "operational_modes": {
@@ -413,12 +413,12 @@ class TestBehavioralSpecWarnings:
                                "triggers": ["y"], "reporting_frequency": "h",
                                "escalation_threshold": "30m", "human_required": True},
                 },
-                "vollzug_protocol": {"enabled": False, "timeout_quittung": "30min",
-                                     "timeout_vollzug": "48h", "on_timeout": "escalate"},
+                "execution_protocol": {"enabled": False, "timeout_acknowledgment": "30min",
+                                     "timeout_completion": "48h", "on_timeout": "escalate"},
             }
         }
         warnings = self._behavioral_warnings(config)
-        assert any("vollzug" in w.message.lower() for w in warnings)
+        assert any("execution" in w.message.lower() for w in warnings)
 
     def test_s1_without_autonomy_levels_info(self):
         """S1 units missing autonomy levels in behavioral config → info."""

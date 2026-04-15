@@ -123,11 +123,11 @@ export interface EscalationChains {
   algedonic: EscalationPath;
 }
 
-// ── Vollzug Protocol ──
-export interface VollzugProtocol {
+// ── Execution Protocol ──
+export interface ExecutionProtocol {
   enabled: boolean;
-  timeout_quittung: string;
-  timeout_vollzug: string;
+  timeout_acknowledgment: string;
+  timeout_completion: string;
   on_timeout: 'escalate' | 'remind' | 'alert_human';
 }
 
@@ -233,7 +233,7 @@ export interface ViableSystem {
   persistence?: Persistence;
   operational_modes?: OperationalModes;
   escalation_chains?: EscalationChains;
-  vollzug_protocol?: VollzugProtocol;
+  execution_protocol?: ExecutionProtocol;
 }
 
 export interface Config {

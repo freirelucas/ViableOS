@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * User Flow Tests für ViableOS
- * Simuliert echte User-Interaktionen
+ * User Flow Tests for ViableOS
+ * Simulates real user interactions
  *
- * Nutze data-testid Attribute in React-Komponenten:
- *   <button data-testid="submit-btn">Absenden</button>
+ * Use data-testid attributes in React components:
+ *   <button data-testid="submit-btn">Submit</button>
  */
 
 test.describe('User Flows', () => {
@@ -13,11 +13,11 @@ test.describe('User Flows', () => {
   // ============================================================
   // Chat Flow
   // ============================================================
-  test('Chat-Interface ist sichtbar', async ({ page }) => {
+  test('Chat interface is visible', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // TODO: Passe Selektoren an die Chat-Komponente an
+    // TODO: Adjust selectors to match the chat component
     // await expect(page.locator('[data-testid="chat-window"]')).toBeVisible();
     // await expect(page.locator('[data-testid="chat-input"]')).toBeVisible();
   });
@@ -25,19 +25,19 @@ test.describe('User Flows', () => {
   // ============================================================
   // Wizard Flow
   // ============================================================
-  test('Wizard ist erreichbar', async ({ page }) => {
+  test('Wizard is reachable', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // TODO: Navigation zum Wizard
+    // TODO: Navigate to wizard
     // await page.click('[data-testid="start-wizard-btn"]');
     // await expect(page.locator('[data-testid="wizard-step-1"]')).toBeVisible();
   });
 
   // ============================================================
-  // API-Interaktion
+  // API Interaction
   // ============================================================
-  test('API-Calls zum Backend (Port 8000) funktionieren', async ({ page }) => {
+  test('API calls to backend (port 8000) work', async ({ page }) => {
     await page.route('**/api/**', async (route) => {
       const response = await route.fetch();
       const status = response.status();
@@ -54,7 +54,7 @@ test.describe('User Flows', () => {
   // ============================================================
   // Responsive Design
   // ============================================================
-  test('Mobile Ansicht funktioniert', async ({ page }) => {
+  test('Mobile view works', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
     await page.waitForLoadState('networkidle');

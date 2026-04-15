@@ -65,6 +65,9 @@ def _model_to_langchain(model: str) -> tuple[str, str]:
         return "ChatOpenAI", model  # DeepSeek uses OpenAI-compatible API
     if model.startswith("grok"):
         return "ChatOpenAI", model  # xAI uses OpenAI-compatible API
+    if model.startswith("ollama/") or "ollama" in model.lower():
+        clean = model.replace("ollama/", "", 1)
+        return "ChatOllama", clean
     # Default to OpenAI-compatible
     return "ChatOpenAI", model
 
@@ -167,6 +170,8 @@ def _generate_graph_py(
         imports.append("from langchain_openai import ChatOpenAI")
     if "ChatGoogleGenerativeAI" in model_classes:
         imports.append("from langchain_google_genai import ChatGoogleGenerativeAI")
+    if "ChatOllama" in model_classes:
+        imports.append("from langchain_community.chat_models import ChatOllama")
 
     imports_str = "\n".join(imports)
 
@@ -226,9 +231,7 @@ def {sys_name}(state: AgentState) -> dict:
     s1_nodes_list = ", ".join(f'"{n}"' for n in all_node_names if n.startswith("s1_"))
 
     approval_items = ", ".join(f'"{a}"' for a in approval_required) if approval_required else ""
-    approval_check = f"""
-    APPROVAL_REQUIRED = [{approval_items}]
-""" if approval_required else ""
+    approval_check = f"\nAPPROVAL_REQUIRED = [{approval_items}]\n" if approval_required else ""
 
     return f'''"""ViableOS LangGraph deployment — {system_name}
 
@@ -339,6 +342,7 @@ langchain-core>=0.3
 langchain-anthropic>=0.3
 langchain-openai>=0.3
 langchain-google-genai>=2.0
+langchain-community>=0.3
 langgraph-checkpoint>=2.0
 python-dotenv>=1.0
 """
@@ -346,17 +350,20 @@ python-dotenv>=1.0
 
 def _generate_env_example(config: dict[str, Any]) -> str:
     vs = config.get("viable_system", {})
-    models_used: set[str] = set()
-    for unit in vs.get("system_1", []):
-        if unit.get("model"):
-            models_used.add(unit["model"])
+    model_routing = vs.get("model_routing", {})
+    provider_pref = model_routing.get("provider_preference", "")
 
     lines = ["# ViableOS LangGraph Environment Variables", ""]
 
-    # Always include Anthropic since it's the default
-    lines.append("ANTHROPIC_API_KEY=sk-ant-...")
-    lines.append("OPENAI_API_KEY=sk-...")
-    lines.append("GOOGLE_API_KEY=...")
+    if provider_pref == "ollama":
+        lines.append("# Ollama (local — no API key needed)")
+        lines.append("OLLAMA_BASE_URL=http://localhost:11434")
+    else:
+        # Include cloud provider keys
+        lines.append("ANTHROPIC_API_KEY=sk-ant-...")
+        lines.append("OPENAI_API_KEY=sk-...")
+        lines.append("GOOGLE_API_KEY=...")
+
     lines.append("")
     lines.append("# LangSmith (optional)")
     lines.append("LANGCHAIN_TRACING_V2=true")
@@ -364,6 +371,133 @@ def _generate_env_example(config: dict[str, Any]) -> str:
     lines.append(f"LANGCHAIN_PROJECT=viableos-{_slugify(vs.get('name', 'system'))}")
 
     return "\n".join(lines) + "\n"
+
+
+def _generate_setup_sh(config: dict[str, Any]) -> str:
+    """Generate a one-command setup script for the deployment package."""
+    vs = config.get("viable_system", {})
+    system_name = vs.get("name", "ViableOS System")
+    model_routing = vs.get("model_routing", {})
+    provider_pref = model_routing.get("provider_preference", "")
+
+    # Collect unique Ollama models from model_routing
+    ollama_models: list[str] = []
+    seen: set[str] = set()
+    for key, value in model_routing.items():
+        if key in ("provider_preference",) or not isinstance(value, str):
+            continue
+        if value.startswith("ollama/"):
+            clean = value.replace("ollama/", "", 1)
+            if clean not in seen:
+                ollama_models.append(clean)
+                seen.add(clean)
+
+    # Build pull commands
+    pull_lines = "\n".join(
+        f'  pull_model "{m}"' for m in ollama_models
+    )
+
+    ollama_section = ""
+    if provider_pref == "ollama" and ollama_models:
+        ollama_section = f'''
+# ── Ollama ────────────────────────────────────────────────────
+step "Checking Ollama installation..."
+
+if command -v ollama &>/dev/null; then
+  ok "Ollama already installed ($(ollama --version 2>/dev/null || echo 'unknown version'))"
+else
+  step "Installing Ollama..."
+  curl -fsSL https://ollama.com/install.sh | sh
+  ok "Ollama installed"
+fi
+
+# Start Ollama server if not running
+if ! curl -sf http://localhost:11434/api/tags &>/dev/null; then
+  step "Starting Ollama server..."
+  ollama serve &>/dev/null &
+  OLLAMA_PID=$!
+  # Wait for server to be ready
+  for i in $(seq 1 30); do
+    curl -sf http://localhost:11434/api/tags &>/dev/null && break
+    sleep 1
+  done
+  if curl -sf http://localhost:11434/api/tags &>/dev/null; then
+    ok "Ollama server started (PID $OLLAMA_PID)"
+  else
+    fail "Ollama server failed to start within 30s"
+  fi
+else
+  ok "Ollama server already running"
+fi
+
+pull_model() {{
+  local model="$1"
+  if ollama list 2>/dev/null | grep -q "$model"; then
+    ok "Model $model already pulled"
+  else
+    step "Pulling $model (this may take a while)..."
+    ollama pull "$model"
+    ok "Model $model ready"
+  fi
+}}
+
+{pull_lines}
+'''
+
+    return f'''#!/usr/bin/env bash
+# ── ViableOS Setup: {system_name} ─────────────────────────────
+# One-command setup for the generated LangGraph deployment.
+# Usage: chmod +x setup.sh && ./setup.sh
+
+set -euo pipefail
+
+RED="\\033[0;31m"
+GREEN="\\033[0;32m"
+BLUE="\\033[0;34m"
+NC="\\033[0m"
+
+step()  {{ echo -e "${{BLUE}}→${{NC}} $1"; }}
+ok()    {{ echo -e "${{GREEN}}✓${{NC}} $1"; }}
+fail()  {{ echo -e "${{RED}}✗ $1${{NC}}"; exit 1; }}
+
+echo ""
+echo "  ViableOS — {system_name}"
+echo "  Setup script"
+echo ""
+{ollama_section}
+# ── Python environment ────────────────────────────────────────
+step "Setting up Python environment..."
+
+if [ ! -d ".venv" ]; then
+  python3 -m venv .venv
+  ok "Virtual environment created"
+else
+  ok "Virtual environment already exists"
+fi
+
+source .venv/bin/activate
+
+step "Installing dependencies..."
+pip install -q -r requirements.txt
+ok "Dependencies installed"
+
+# ── Environment file ──────────────────────────────────────────
+if [ ! -f ".env" ]; then
+  cp .env.example .env
+  ok "Created .env from .env.example"
+else
+  ok ".env already exists"
+fi
+
+# ── Ready ─────────────────────────────────────────────────────
+echo ""
+echo -e "${{GREEN}}Setup complete!${{NC}}"
+echo ""
+echo "To start the system:"
+echo "  source .venv/bin/activate"
+echo "  langgraph up"
+echo ""
+'''
 
 
 def generate_langgraph_package(
@@ -390,6 +524,9 @@ def generate_langgraph_package(
     shared_resources = vs.get("shared_resources", [])
     domain_flow = vs.get("domain_flow")
     success_criteria = vs.get("success_criteria", [])
+    operational_modes = vs.get("operational_modes")
+    escalation_chains = vs.get("escalation_chains")
+    execution_protocol = vs.get("execution_protocol")
 
     # Generate coordination rules
     auto_rules = generate_base_rules(s1_units)
@@ -408,6 +545,17 @@ def generate_langgraph_package(
     (output / "langgraph.json").write_text(_generate_langgraph_json(vs.get("name", "")))
     (output / ".env.example").write_text(_generate_env_example(config))
 
+    setup_sh = output / "setup.sh"
+    setup_sh.write_text(_generate_setup_sh(config))
+    setup_sh.chmod(0o755)
+
+    # ── Persona resolution ────────────────────────────────────
+
+    from viableos.persona import resolve_personas
+
+    persona_source = vs.get("persona_source", {})
+    persona_sections = resolve_personas(s1_units, persona_source, output)
+
     # ── Generate agent prompt directories ──────────────────────
 
     agents_dir = output / "agents"
@@ -424,6 +572,10 @@ def generate_langgraph_package(
         soul = generate_s1_soul(
             unit, identity, coord_rules, hitl, other_units,
             dependencies=dependencies, domain_flow=domain_flow,
+            operational_modes=operational_modes,
+            escalation_chains=escalation_chains,
+            execution_protocol=execution_protocol,
+            persona_section=persona_sections.get(name, ""),
         )
         (agent_dir / "system_prompt.md").write_text(soul)
 
@@ -431,9 +583,14 @@ def generate_langgraph_package(
     s2_dir = agents_dir / "s2_coordinator"
     s2_dir.mkdir()
     s2_label = vs.get("system_2", {}).get("label", "")
+    s2_cfg = vs.get("system_2", {})
     soul = generate_s2_soul(
         coord_rules, s1_names, identity,
         shared_resources=shared_resources, domain_flow=domain_flow, label=s2_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        conflict_detection=s2_cfg.get("conflict_detection"),
+        transduction_mappings=s2_cfg.get("transduction_mappings"),
     )
     (s2_dir / "system_prompt.md").write_text(soul)
 
@@ -447,6 +604,12 @@ def generate_langgraph_package(
         kpi_list=s3_cfg.get("kpi_list"),
         success_criteria=success_criteria if success_criteria else None,
         label=s3_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        triple_index=s3_cfg.get("triple_index"),
+        deviation_logic=s3_cfg.get("deviation_logic"),
+        intervention_authority=s3_cfg.get("intervention_authority"),
+        decision_principles=s3_cfg.get("decision_principles"),
     )
     (s3_dir / "system_prompt.md").write_text(soul)
 
@@ -456,20 +619,38 @@ def generate_langgraph_package(
     s3star_label = s3star_cfg.get("label", "")
     checks = s3star_cfg.get("checks", [])
     on_failure = s3star_cfg.get("on_failure", "Escalate to human immediately")
-    soul = generate_s3star_soul(identity, checks, s1_names, on_failure, label=s3star_label)
+    soul = generate_s3star_soul(
+        identity, checks, s1_names, on_failure, label=s3star_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        provider_constraint=s3star_cfg.get("provider_constraint"),
+        reporting_target=s3star_cfg.get("reporting_target"),
+        independence_rules=s3star_cfg.get("independence_rules"),
+    )
     (s3star_dir / "system_prompt.md").write_text(soul)
 
     # S4 Scout
     s4_dir = agents_dir / "s4_scout"
     s4_dir.mkdir()
     s4_label = s4_cfg.get("label", "")
-    soul = generate_s4_soul(identity, monitoring, label=s4_label)
+    soul = generate_s4_soul(
+        identity, monitoring, label=s4_label,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+        premises_register=s4_cfg.get("premises_register"),
+        strategy_bridge=s4_cfg.get("strategy_bridge"),
+        weak_signals=s4_cfg.get("weak_signals"),
+    )
     (s4_dir / "system_prompt.md").write_text(soul)
 
     # S5 Policy Guardian
     s5_dir = agents_dir / "s5_policy"
     s5_dir.mkdir()
-    soul = generate_s5_soul(identity, hitl)
+    soul = generate_s5_soul(
+        identity, hitl,
+        operational_modes=operational_modes,
+        escalation_chains=escalation_chains,
+    )
     (s5_dir / "system_prompt.md").write_text(soul)
 
     # ── Shared resources ───────────────────────────────────────

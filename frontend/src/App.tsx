@@ -3,6 +3,7 @@ import { ChatPage } from './pages/ChatPage';
 import { WizardPage } from './pages/WizardPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { OpsRoomPage } from './pages/OpsRoomPage';
+import { SimulationPage } from './pages/SimulationPage';
 import { useConfigStore } from './store/useConfigStore';
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
         {view === 'wizard' && <WizardPage />}
         {view === 'dashboard' && <DashboardPage />}
         {view === 'opsroom' && <OpsRoomPage />}
+        {view === 'simulation' && <SimulationPage />}
       </main>
     </div>
   );

@@ -1,0 +1,650 @@
+"""Tests for the VSM simulation engine."""
+
+from __future__ import annotations
+
+import pytest
+
+from viableos.simulation.agents.s1 import S1Agent
+from viableos.simulation.agents.s2 import S2Agent
+from viableos.simulation.agents.s3 import S3Agent
+from viableos.simulation.agents.s3star import S3StarAgent
+from viableos.simulation.agents.s4 import S4Agent
+from viableos.simulation.agents.s5 import S5Agent
+from viableos.simulation.channels import Message, MessageBus, is_channel_allowed
+from viableos.simulation.engine import VSMSimulation
+
+
+# ── Fixtures ──────────────────────────────────────────────────
+
+
+def _minimal_config() -> dict:
+    """Minimal viable_system config for testing."""
+    return {
+        "viable_system": {
+            "name": "Test System",
+            "identity": {
+                "purpose": "Test the simulation engine",
+                "values": ["Rigor"],
+                "never_do": ["Break tests"],
+            },
+            "system_1": [
+                {"name": "Unit Alpha", "purpose": "Do alpha work", "tools": ["tool-a"]},
+                {"name": "Unit Beta", "purpose": "Do beta work", "tools": ["tool-b"]},
+            ],
+            "system_2": {
+                "coordination_rules": [
+                    {"trigger": "Unit Alpha completes", "action": "Notify Unit Beta"},
+                ],
+            },
+            "system_3": {
+                "reporting_rhythm": "weekly",
+                "resource_allocation": "Alpha 60%, Beta 40%",
+            },
+            "system_3_star": {
+                "checks": [
+                    {"name": "Quality check", "target": "Unit Alpha", "method": "Cross-verify output"},
+                ],
+            },
+            "system_4": {
+                "monitoring": {
+                    "competitors": ["Competitor A"],
+                    "technology": ["AI advances"],
+                    "regulation": ["LGPD"],
+                },
+            },
+        },
+    }
+
+
+# ── MessageBus ────────────────────────────────────────────────
+
+
+class TestMessageBus:
+    def test_allowed_channel_s1_to_s2(self):
+        assert is_channel_allowed("s1", "s2") is True
+
+    def test_blocked_channel_s1_to_s1(self):
+        assert is_channel_allowed("s1", "s1") is False
+
+    def test_algedonic_any_to_s5(self):
+        assert is_channel_allowed("s1", "s5") is True
+        assert is_channel_allowed("s3", "s5") is True
+        assert is_channel_allowed("s4", "s5") is True
+
+    def test_send_and_deliver(self):
+        bus = MessageBus()
+        msg = Message(
+            sender="unit_a", sender_level="s1",
+            receiver="s2_coordinator", receiver_level="s2",
+            performative="inform", content="Status: idle",
+        )
+        assert bus.send(msg) is True
+        assert bus.total_sent == 1
+
+        delivered = bus.deliver()
+        assert delivered == 1
+        assert bus.total_delivered == 1
+
+        collected = bus.collect("s2_coordinator")
+        assert len(collected) == 1
+        assert collected[0].content == "Status: idle"
+
+    def test_blocked_message(self):
+        bus = MessageBus()
+        msg = Message(
+            sender="unit_a", sender_level="s1",
+            receiver="unit_b", receiver_level="s1",
+            performative="inform", content="Hey",
+        )
+        assert bus.send(msg) is False
+        assert bus.total_blocked == 1
+
+    def test_algedonic_alert_counted(self):
+        bus = MessageBus()
+        msg = Message(
+            sender="unit_a", sender_level="s1",
+            receiver="s5_policy", receiver_level="s5",
+            performative="alert", content="Critical error!",
+        )
+        bus.send(msg)
+        assert bus.algedonic_count == 1
+
+
+# ── VSMSimulation ─────────────────────────────────────────────
+
+
+class TestVSMSimulation:
+    def test_builds_all_agents(self):
+        sim = VSMSimulation(_minimal_config())
+        agent_levels = [a.system_level for a in sim.scheduler.agents]
+        assert agent_levels.count("s1") == 2
+        assert agent_levels.count("s2") == 1
+        assert agent_levels.count("s3") == 1
+        assert agent_levels.count("s3star") == 1
+        assert agent_levels.count("s4") == 1
+        assert agent_levels.count("s5") == 1
+
+    def test_total_agents(self):
+        sim = VSMSimulation(_minimal_config())
+        assert len(sim.scheduler.agents) == 7  # 2 S1 + 5 meta
+
+    def test_step_increments_tick(self):
+        sim = VSMSimulation(_minimal_config())
+        assert sim.tick == 0
+        sim.step()
+        assert sim.tick == 1
+        sim.step()
+        assert sim.tick == 2
+
+    def test_run_multiple_ticks(self):
+        sim = VSMSimulation(_minimal_config())
+        sim.run(100)
+        assert sim.tick == 100
+
+
+# ── Multi-rate Scheduling ─────────────────────────────────────
+
+
+class TestMultiRateScheduling:
+    def test_s2_activates_every_tick(self):
+        """S2 (nervous system) activates every tick — faster than S1."""
+        sim = VSMSimulation(_minimal_config())
+        sim.run(10)
+        s2 = next(a for a in sim.scheduler.agents if a.system_level == "s2")
+        assert s2.step_count == 10  # tick_rate=1
+
+    def test_s1_activates_every_2_ticks(self):
+        sim = VSMSimulation(_minimal_config())
+        sim.run(10)
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        assert s1.step_count == 5  # tick_rate=2
+
+    def test_s3_activates_every_14_ticks(self):
+        sim = VSMSimulation(_minimal_config())
+        sim.run(28)
+        s3 = next(a for a in sim.scheduler.agents if a.system_level == "s3")
+        assert s3.step_count == 2  # tick_rate=14
+
+    def test_s5_activates_rarely(self):
+        sim = VSMSimulation(_minimal_config())
+        sim.run(50)
+        s5 = next(a for a in sim.scheduler.agents if a.system_level == "s5")
+        assert s5.step_count == 1  # tick_rate=50
+
+    def test_s2_faster_than_s1(self):
+        """Beer's principle: coordination is faster than operations."""
+        sim = VSMSimulation(_minimal_config())
+        sim.run(10)
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        s2 = next(a for a in sim.scheduler.agents if a.system_level == "s2")
+        assert s2.step_count > s1.step_count
+
+    def test_priority_order(self):
+        """S5 has lowest priority number (acts first), S1 highest (acts last)."""
+        sim = VSMSimulation(_minimal_config())
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        s5 = next(a for a in sim.scheduler.agents if a.system_level == "s5")
+        assert s5.priority < s1.priority
+
+
+# ── Agent Communication ───────────────────────────────────────
+
+
+class TestAgentCommunication:
+    def test_s1_reports_to_s2(self):
+        """S1 sends status to S2 when it has work to report."""
+        sim = VSMSimulation(_minimal_config())
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        s2 = next(a for a in sim.scheduler.agents if a.system_level == "s2")
+
+        # Give S1 a task by putting a message in its mailbox
+        sim.message_bus._mailboxes[s1.name].append(Message(
+            sender="s3_optimizer", sender_level="s3",
+            receiver=s1.name, receiver_level="s1",
+            performative="request", content="Analyze new legislation",
+        ))
+
+        # Run one S1 cycle
+        sim.step()
+        sim.step()  # S1 activates on tick 2
+
+        # Check S2 received the status report
+        assert sim.message_bus.total_sent > 0
+
+    def test_algedonic_reaches_s5(self):
+        """Any agent can alert S5 (algedonic channel)."""
+        sim = VSMSimulation(_minimal_config())
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        s5 = next(a for a in sim.scheduler.agents if a.system_level == "s5")
+
+        # S1 sends alert directly to S5
+        sim.message_bus.send(Message(
+            sender=s1.name, sender_level="s1",
+            receiver=s5.name, receiver_level="s5",
+            performative="alert", content="Critical: data source compromised",
+        ))
+        sim.message_bus.deliver()
+
+        # S5 should have the alert
+        messages = sim.message_bus.peek(s5.name)
+        assert len(messages) == 1
+        assert messages[0].performative == "alert"
+
+
+# ── Mode Switching ────────────────────────────────────────────
+
+
+class TestModeSwitching:
+    def test_switch_to_elevated(self):
+        sim = VSMSimulation(_minimal_config())
+        sim.switch_mode("elevated")
+        assert sim.mode == "elevated"
+
+        # All tick rates should be halved (faster)
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        assert s1.tick_rate == 1  # was 2, now 2 * 0.5 = 1
+
+    def test_switch_to_crisis(self):
+        sim = VSMSimulation(_minimal_config())
+        sim.switch_mode("crisis")
+        assert sim.mode == "crisis"
+
+        # S5 in crisis: 50 * 0.25 = 12
+        s5 = next(a for a in sim.scheduler.agents if a.system_level == "s5")
+        assert s5.tick_rate == 12
+
+    def test_crisis_s2_stays_at_1(self):
+        """S2 tick_rate can't go below 1 (already fastest)."""
+        sim = VSMSimulation(_minimal_config())
+        sim.switch_mode("crisis")
+        s2 = next(a for a in sim.scheduler.agents if a.system_level == "s2")
+        assert s2.tick_rate == 1
+
+    def test_same_mode_noop(self):
+        sim = VSMSimulation(_minimal_config())
+        sim.switch_mode("normal")  # already normal
+        assert sim.mode == "normal"
+
+
+# ── DataCollector ─────────────────────────────────────────────
+
+
+class TestDataCollector:
+    def test_collects_model_data(self):
+        sim = VSMSimulation(_minimal_config())
+        sim.run(5)
+        df = sim.datacollector.get_model_vars_dataframe()
+        assert len(df) == 5
+        assert "tick" in df.columns
+        assert "mode" in df.columns
+        assert list(df["tick"]) == [1, 2, 3, 4, 5]
+
+    def test_collects_agent_data(self):
+        sim = VSMSimulation(_minimal_config())
+        sim.run(5)
+        df = sim.datacollector.get_agent_vars_dataframe()
+        assert "system_level" in df.columns
+        assert "step_count" in df.columns
+
+
+# ── Integration: full simulation run ──────────────────────────
+
+
+class TestFullSimulation:
+    def test_100_ticks_no_crash(self):
+        """Smoke test: run 100 ticks without errors."""
+        sim = VSMSimulation(_minimal_config())
+        sim.run(100)
+        assert sim.tick == 100
+        assert sim.message_bus.total_blocked == 0  # no invalid channel attempts
+
+    def test_with_policy_research_template(self):
+        """Run simulation from the actual policy-research template."""
+        import yaml
+        from pathlib import Path
+
+        template_path = Path("src/viableos/templates/policy-research.yaml")
+        if not template_path.exists():
+            pytest.skip("Template not found")
+
+        config = yaml.safe_load(template_path.read_text())
+        sim = VSMSimulation(config)
+
+        # Should have 4 S1 + 5 meta = 9 agents
+        assert len(sim.scheduler.agents) == 9
+
+        sim.run(50)
+        assert sim.tick == 50
+
+        # Verify data collection works
+        df = sim.datacollector.get_model_vars_dataframe()
+        assert len(df) == 50
+
+
+# ── Syntegration Protocol ─────────────────────────────────────
+
+
+from viableos.simulation.protocols.syntegration import (
+    Phase,
+    SyntegrationProtocol,
+)
+
+
+class TestSyntegrationProtocol:
+    def test_manual_trigger(self):
+        """Manually triggering a syntegration initializes participants."""
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("research_agenda_review")
+        assert protocol.phase == Phase.OSI
+        assert len(protocol.participants) == 7  # 2 S1 + 5 meta
+        assert protocol.trigger == "research_agenda_review"
+
+    def test_full_protocol_runs_all_phases(self):
+        """Running advance() 8 times goes through all phases to COMPLETED."""
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+
+        phases_seen = [protocol.phase]
+        for _ in range(7):  # OSI → JOSTLE → AUCTION → R1 → R2 → R3 → RESOLUTION → COMPLETED
+            protocol.advance(sim)
+            phases_seen.append(protocol.phase)
+
+        assert Phase.OSI in phases_seen
+        assert Phase.JOSTLE in phases_seen
+        assert Phase.AUCTION in phases_seen
+        assert Phase.REVERB_1 in phases_seen
+        assert Phase.REVERB_2 in phases_seen
+        assert Phase.REVERB_3 in phases_seen
+        assert Phase.RESOLUTION in phases_seen
+        assert Phase.COMPLETED in phases_seen
+        assert protocol.is_complete
+
+    def test_osi_collects_statements(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        # After trigger, we're in OSI. Advance to JOSTLE.
+        protocol.advance(sim)
+        assert len(protocol.importance_statements) == 7
+
+    def test_jostle_produces_topics(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        protocol.advance(sim)  # OSI → JOSTLE
+        protocol.advance(sim)  # JOSTLE → AUCTION
+        assert len(protocol.topics) >= 2
+
+    def test_auction_assigns_roles(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        for _ in range(3):  # → OSI → JOSTLE → AUCTION
+            protocol.advance(sim)
+        # Now in REVERB_1, roles should be assigned
+        assert len(protocol.roles) == 7
+        for agent_name, roles in protocol.roles.items():
+            assert len(roles) >= 1
+            assert roles[0]["role"] in ("player", "critic")
+
+    def test_reverberation_produces_log(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        for _ in range(6):  # through all 3 reverb cycles
+            protocol.advance(sim)
+        assert len(protocol.reverberation_log) == 3
+
+    def test_resolution_produces_outcomes(self):
+        sim = VSMSimulation(_minimal_config())
+        protocol = sim.trigger_syntegration("test")
+        for _ in range(7):  # all the way to COMPLETED
+            protocol.advance(sim)
+        assert len(protocol.outcomes) >= 2
+        assert protocol.outcomes[0].topic in protocol.topics
+        assert protocol.outcomes[0].players  # has player assignments
+
+    def test_completed_protocol_is_archived(self):
+        """Completed syntegration moves to history."""
+        sim = VSMSimulation(_minimal_config())
+        sim.trigger_syntegration("test")
+        # Run enough ticks for the protocol to complete (1 phase per tick)
+        sim.run(10)
+        assert sim.active_syntegration is None
+        assert len(sim.syntegration_history) == 1
+        assert sim.syntegration_history[0].is_complete
+
+    def test_cooldown_prevents_immediate_retrigger(self):
+        """After a syntegration completes, cooldown prevents another."""
+        sim = VSMSimulation(_minimal_config())
+        sim._syntegration_config = {"cooldown": "5", "system_triggers": []}
+        sim.trigger_syntegration("first")
+        sim.run(10)  # complete first
+        assert len(sim.syntegration_history) == 1
+        assert sim._syntegration_cooldown > 0
+
+    def test_engine_step_advances_syntegration(self):
+        """The engine's step() method automatically advances the protocol."""
+        sim = VSMSimulation(_minimal_config())
+        sim.trigger_syntegration("via_engine")
+        initial_phase = sim.active_syntegration.phase
+        sim.step()
+        assert sim.active_syntegration.phase != initial_phase
+
+    def test_auto_trigger_from_s4_signals(self):
+        """System auto-triggers syntegration when S4 detects enough signals."""
+        sim = VSMSimulation(_minimal_config())
+        sim._syntegration_config = {
+            "system_triggers": [
+                {"condition": "s4_converging_signals", "threshold": 3},
+            ],
+        }
+        # Manually set S4's signal count above threshold
+        s4 = next(a for a in sim.scheduler.agents if a.system_level == "s4")
+        s4.signals_detected = 5
+        sim.step()
+        assert sim.active_syntegration is not None
+        assert sim.active_syntegration.trigger == "s4_converging_signals"
+
+
+# ── Environment Model ─────────────────────────────────────────
+
+
+from viableos.simulation.environment import (
+    Environment,
+    EnvironmentEvent,
+    minimal_scenario,
+    policy_research_scenario,
+)
+
+
+class TestEnvironment:
+    def test_minimal_scenario_has_events(self):
+        events = minimal_scenario(100)
+        assert len(events) >= 3
+
+    def test_policy_research_scenario(self):
+        events = policy_research_scenario(100)
+        assert len(events) >= 10
+        categories = {e["category"] for e in events}
+        assert "legislation" in categories
+        assert "crisis" in categories
+
+    def test_environment_step_delivers_events(self):
+        env = Environment([
+            {"tick": 5, "category": "test", "title": "Event A", "description": "Desc", "relevance": 3},
+            {"tick": 10, "category": "test", "title": "Event B", "description": "Desc", "relevance": 4},
+        ])
+        new = env.step(5)
+        assert len(new) == 1
+        assert new[0].title == "Event A"
+        assert len(env.new_signals) == 1
+
+    def test_no_events_on_empty_tick(self):
+        env = Environment([
+            {"tick": 5, "category": "test", "title": "X", "description": "D", "relevance": 3},
+        ])
+        new = env.step(3)
+        assert len(new) == 0
+
+    def test_s4_detects_environment_signals(self):
+        """S4 agent picks up signals from the environment."""
+        sim = VSMSimulation(
+            _minimal_config(),
+            scenario=[
+                {"tick": 4, "category": "legislation", "title": "New law", "description": "Important", "relevance": 4},
+            ],
+        )
+        sim.run(10)
+        s4 = next(a for a in sim.scheduler.agents if a.system_level == "s4")
+        assert s4.signals_detected >= 1
+
+    def test_critical_signal_reaches_s5_as_alert(self):
+        """Relevance>=5 signals generate algedonic alerts to S5."""
+        sim = VSMSimulation(
+            _minimal_config(),
+            scenario=[
+                {"tick": 4, "category": "crisis", "title": "Data breach", "description": "Critical", "relevance": 5},
+            ],
+        )
+        sim.run(10)
+        assert sim.message_bus.algedonic_count >= 1
+
+    def test_inject_event_dynamically(self):
+        env = Environment([])
+        env.inject_event(EnvironmentEvent(tick=3, category="test", title="Dynamic", description="Injected", relevance=3))
+        new = env.step(3)
+        assert len(new) == 1
+        assert new[0].title == "Dynamic"
+
+
+# ── LLM Deliberation ─────────────────────────────────────────
+
+
+class TestLLMDeliberation:
+    def test_s1_with_mock_llm(self):
+        """S1 agent uses llm_fn when provided."""
+        calls = []
+
+        def mock_llm(prompt: str) -> str:
+            calls.append(prompt)
+            return "Analyzed legislation and produced briefing"
+
+        sim = VSMSimulation(_minimal_config(), llm_fn=mock_llm)
+
+        # Give S1 a task
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        sim.message_bus._mailboxes[s1.name].append(
+            Message(
+                sender="s3_optimizer", sender_level="s3",
+                receiver=s1.name, receiver_level="s1",
+                performative="request", content="Analyze new legislation",
+            )
+        )
+
+        sim.run(4)
+        assert len(calls) >= 1
+        assert s1.tasks_completed >= 1
+        assert "last_output" in s1.beliefs
+
+    def test_s1_without_llm_still_works(self):
+        """S1 agent works without LLM (fallback heuristic)."""
+        sim = VSMSimulation(_minimal_config())
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        sim.message_bus._mailboxes[s1.name].append(
+            Message(
+                sender="s3_optimizer", sender_level="s3",
+                receiver=s1.name, receiver_level="s1",
+                performative="request", content="Do work",
+            )
+        )
+        sim.run(4)
+        assert s1.tasks_completed >= 1
+
+    def test_llm_failure_graceful(self):
+        """LLM failure doesn't crash the simulation."""
+        def failing_llm(prompt: str) -> str:
+            raise RuntimeError("LLM unavailable")
+
+        sim = VSMSimulation(_minimal_config(), llm_fn=failing_llm)
+        s1 = next(a for a in sim.scheduler.agents if a.system_level == "s1")
+        sim.message_bus._mailboxes[s1.name].append(
+            Message(
+                sender="s3_optimizer", sender_level="s3",
+                receiver=s1.name, receiver_level="s1",
+                performative="request", content="Task",
+            )
+        )
+        sim.run(4)  # Should not crash
+        assert s1.tasks_completed >= 1
+
+
+# ── API Endpoint ──────────────────────────────────────────────
+
+
+from fastapi.testclient import TestClient
+from viableos.api.main import app
+
+client = TestClient(app)
+
+
+class TestSimulationAPI:
+    def test_run_simulation(self):
+        resp = client.post("/api/simulate", json={
+            "config": _minimal_config(),
+            "ticks": 20,
+            "scenario": "minimal",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ticks_run"] == 20
+        assert len(data["agents"]) == 7
+        assert data["messages_blocked"] == 0
+
+    def test_with_syntegration_trigger(self):
+        resp = client.post("/api/simulate", json={
+            "config": _minimal_config(),
+            "ticks": 30,
+            "scenario": "minimal",
+            "trigger_syntegration_at": 5,
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["syntegrations_completed"] >= 1
+        assert len(data["syntegration_history"]) >= 1
+        assert data["syntegration_history"][0]["phase"] == "completed"
+
+    def test_metrics_returned(self):
+        resp = client.post("/api/simulate", json={
+            "config": _minimal_config(),
+            "ticks": 10,
+            "scenario": "none",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["metrics"]) == 10
+        assert data["metrics"][0]["tick"] == 1
+
+    def test_invalid_config_rejected(self):
+        resp = client.post("/api/simulate", json={
+            "config": {"bad": "config"},
+            "ticks": 10,
+        })
+        assert resp.status_code == 422
+
+    def test_policy_research_scenario(self):
+        """Full simulation with policy research template."""
+        import yaml
+        from pathlib import Path
+
+        template = Path("src/viableos/templates/policy-research.yaml")
+        if not template.exists():
+            pytest.skip("Template not found")
+
+        config = yaml.safe_load(template.read_text())
+        resp = client.post("/api/simulate", json={
+            "config": config,
+            "ticks": 50,
+            "scenario": "policy_research",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ticks_run"] == 50
+        assert len(data["agents"]) == 9  # 4 S1 + 5 meta
+        assert data["environment_events_total"] > 0

@@ -8,8 +8,8 @@ import type { ViableSystem } from '../../types';
 function BehavioralSpecsSummary({ vs }: { vs: ViableSystem }) {
   const modes = vs.operational_modes;
   const chains = vs.escalation_chains;
-  const vollzug = vs.vollzug_protocol;
-  const hasSpecs = modes || chains || vollzug;
+  const execution = vs.execution_protocol;
+  const hasSpecs = modes || chains || execution;
 
   if (!hasSpecs) return null;
 
@@ -29,7 +29,7 @@ function BehavioralSpecsSummary({ vs }: { vs: ViableSystem }) {
               return (
                 <div key={key} className="text-xs text-[var(--color-muted)]">
                   <span className="font-medium capitalize">{key}</span>
-                  {' — '}Autonomie: {mode.s1_autonomy}, Reporting: {mode.reporting_frequency}
+                  {' — '}Autonomy: {mode.s1_autonomy}, Reporting: {mode.reporting_frequency}
                 </div>
               );
             })}
@@ -48,14 +48,14 @@ function BehavioralSpecsSummary({ vs }: { vs: ViableSystem }) {
           </div>
         )}
 
-        {vollzug && (
+        {execution && (
           <div className="p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]">
-            <div className="text-xs font-bold text-[var(--color-text)] mb-1">Vollzug Protocol</div>
+            <div className="text-xs font-bold text-[var(--color-text)] mb-1">Execution Protocol</div>
             <div className="text-xs text-[var(--color-muted)]">
-              {vollzug.enabled ? 'Aktiv' : 'Inaktiv'} — Quittung: {vollzug.timeout_quittung}, Vollzug: {vollzug.timeout_vollzug}
+              {execution.enabled ? 'Active' : 'Inactive'} — Acknowledgment: {execution.timeout_acknowledgment}, Execution: {execution.timeout_completion}
             </div>
             <div className="text-xs text-[var(--color-muted)]">
-              Bei Timeout: {vollzug.on_timeout}
+              On Timeout: {execution.on_timeout}
             </div>
           </div>
         )}
