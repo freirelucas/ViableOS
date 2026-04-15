@@ -11,7 +11,7 @@ const EMPTY_CONFIG: Config = {
   },
 };
 
-type View = 'chat' | 'wizard' | 'dashboard' | 'opsroom';
+type View = 'chat' | 'wizard' | 'dashboard' | 'opsroom' | 'simulation';
 
 interface ConfigStore {
   config: Config;
