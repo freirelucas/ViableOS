@@ -118,6 +118,12 @@ TEMPLATE_INFO: dict[str, dict[str, Any]] = {
         "description": "Monitoring & Analysis, Bibliographic Research, Text Production, Data & Evidence",
         "units": 4,
     },
+    "cda-diest": {
+        "name": "CDA-DIEST",
+        "tagline": "Corporação Digital Autônoma para Gestão de Bolsistas",
+        "description": "Gestor-Pesquisador, Coordenador de Área, DIDES Auditoria, Comissão Julgadora, Bolsista, Administrativo, Agente Desenvolvedor",
+        "units": 7,
+    },
 }
 
 VALUE_PRESETS = [

@@ -7,7 +7,7 @@ import { Layers, Plus, MessageSquare } from 'lucide-react';
 
 export function TemplateStep() {
   const templates = useTemplates();
-  const { templateKey, loadTemplate, setWizardStep, assessmentData, loadFromAssessment, setConfig } = useConfigStore();
+  const { templateKey, loadTemplate, setWizardStep, assessmentData, setConfig } = useConfigStore();
   const chatAssessment = useChatStore((s) => s.assessmentData);
 
   const handleSelect = async (key: string) => {

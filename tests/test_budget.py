@@ -41,6 +41,21 @@ def test_allocations_sum_to_budget():
     assert abs(total - 150.0) < 1.0
 
 
+def test_empty_system_1_still_shows_s1_allocation():
+    plan = calculate_budget(_make_config(num_units=0))
+    s1_allocs = [a for a in plan.allocations if a.system == "S1"]
+    assert len(s1_allocs) == 1
+    assert s1_allocs[0].friendly_name == "Operations"
+    assert s1_allocs[0].percentage == 65.0
+    assert abs(s1_allocs[0].monthly_usd - 150.0 * 0.65) < 1.0
+
+
+def test_allocations_cover_100_percent():
+    plan = calculate_budget(_make_config(num_units=0))
+    total = sum(a.percentage for a in plan.allocations)
+    assert abs(total - 100.0) < 0.5
+
+
 def test_s1_units_get_equal_share():
     plan = calculate_budget(_make_config(num_units=3))
     s1_allocs = [a for a in plan.allocations if a.system.startswith("S1:")]

@@ -22,6 +22,8 @@ dependencies = [
     "pymupdf>=1.24",
     "python-multipart>=0.0.9",
     "mesa>=3.0",
+    "pyjwt>=2.0",
+    "bcrypt>=4.0",
 ]
 
 [project.scripts]

@@ -36,7 +36,7 @@ interface ChatStore {
 }
 
 // NOT persisted — contains API key, must stay in-memory only
-export const useChatStore = create<ChatStore>()((set, get) => ({
+export const useChatStore = create<ChatStore>()((set) => ({
   sessionId: null,
   provider: 'anthropic',
   model: 'claude-sonnet-4-6',

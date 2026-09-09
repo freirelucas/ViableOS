@@ -5,6 +5,18 @@ services:
       dockerfile: Dockerfile.api
     ports:
       - "8000:8000"
+    environment:
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-viableos-dev-insecure-change-me}
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRE_MINUTES=480
+      - USERS_JSON=/app/users.json
+      - IPEAGPT_URL=${IPEAGPT_URL:-https://ipeagpt.ipea.gov.br/api/v1}
+      - CDA_STATE_DIR=/app/data/estado
+      - CDA_ORCAMENTO_USD=${CDA_ORCAMENTO_USD:-0}
+      - CDA_CUSTO_POR_1K_TOKENS=${CDA_CUSTO_POR_1K_TOKENS:-0}
+    volumes:
+      - ./users.dev.json:/app/users.json:ro
+      - ./data/estado:/app/data/estado
     restart: unless-stopped
 
   frontend:

@@ -1,0 +1,10 @@
+{
+  "admin": {
+    "password_hash": "$2b$12$DhRyURqyYCLBYoOdVlKgh.7GxW/J4vOnL3FnaJaP2Bm0Yd1J2O00a",
+    "scopes": ["admin", "tr:write"]
+  },
+  "user": {
+    "password_hash": "$2b$12$DhRyURqyYCLBYoOdVlKgh.7GxW/J4vOnL3FnaJaP2Bm0Yd1J2O00a",
+    "scopes": ["tr:write"]
+  }
+}

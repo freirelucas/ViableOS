@@ -106,6 +106,7 @@ async def send_message(
             attachments.append(att)
             att_meta.append(AttachmentMeta(
                 id=att.id, filename=att.filename, content_type=att.content_type,
+                sha256=att.sha256,
             ))
 
     # Store the user message (text only — attachments referenced by meta)

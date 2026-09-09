@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import uuid
 from dataclasses import dataclass
 
@@ -22,6 +23,7 @@ class Attachment:
     content_type: str
     llm_content: str | dict  # text string or {"type": "image_url", ...} block
     size_bytes: int
+    sha256: str = ""  # identidade do conteúdo enviado (proveniência chat)
 
 
 class FileStore:
@@ -42,6 +44,7 @@ class FileStore:
             raise ValueError(f"File too large ({len(data)} bytes). Max {MAX_FILE_SIZE} bytes.")
 
         att_id = str(uuid.uuid4())
+        sha = hashlib.sha256(data).hexdigest()
 
         if content_type in IMAGE_TYPES:
             llm_content = _encode_image_base64(data, content_type)
@@ -59,6 +62,7 @@ class FileStore:
             content_type=content_type,
             llm_content=llm_content,
             size_bytes=len(data),
+            sha256=sha,
         )
         self._files[att_id] = att
         return att

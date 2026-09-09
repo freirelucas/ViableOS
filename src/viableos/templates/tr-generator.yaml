@@ -1,0 +1,144 @@
+viable_system:
+  name: "TR & Edital Generator"
+  runtime: "openclaw"
+
+  budget:
+    monthly_usd: 100
+    strategy: "economy"
+
+  identity:
+    purpose: "Generate Termos de Referência and Chamadas Públicas Especializadas for IPEA/PIPA, anchored in Portaria Normativa 317/2025 and the historical corpus of 55+ real calls"
+    values:
+      - "Normative compliance — every document must conform to Portaria 317/2025"
+      - "Historical grounding — suggestions anchored in the real PIPA corpus"
+      - "Editorial freedom — AI suggests, human decides"
+      - "Transparency — all data sources and rules are visible and auditable"
+    never_do:
+      - "Publish documents without human review"
+      - "Override normative requirements (Art. 4º, 7º, 8º, 9º)"
+      - "Use data outside the official PIPA corpus"
+    algedonic_channel:
+      enabled: true
+      who_can_send: "human"
+      triggers:
+        - "Normative rule updated (new portaria)"
+        - "Corpus data refresh needed"
+      bypasses_hierarchy: true
+
+  system_1:
+    - name: "Document Builder"
+      purpose: "Guide the user through a 5-step wizard to build Termos de Referência and Editais, with real-time preview and compliance checking"
+      tools: [wizard, text-generation, compliance-checking, document-export]
+      weight: 9
+      domain_context: "Central object: TR/Edital documents. This unit orchestrates the entire document generation workflow"
+      autonomy_levels:
+        can_do_alone:
+          - "Compose object definitions from project name"
+          - "Generate profile text from function/theme selections"
+          - "Suggest criteria profiles based on modality and functions"
+          - "Format dates, currency values, and numbers in Brazilian Portuguese"
+          - "Check document compliance against normative rules"
+          - "Generate Word (.doc) and PDF export"
+          - "Save draft to localStorage"
+        needs_coordination:
+          - "Request modality suggestions from corpus analysis"
+          - "Request typical vacancy patterns for the selected theme"
+          - "Use example projects from the PIPA corpus"
+        needs_approval:
+          - "Final document content before export"
+          - "Normative compliance exceptions"
+
+    - name: "Corpus Explorer"
+      purpose: "Provide access to the historical PIPA corpus (55+ calls from 2023–2026) for reference and reuse"
+      tools: [search, filtering, text-analysis]
+      weight: 4
+      domain_context: "Central object: Historical corpus. Feeds the Builder with real examples"
+      autonomy_levels:
+        can_do_alone:
+          - "Search and filter the corpus by theme, modality, year, diretoria"
+          - "Display full call text"
+          - "Count occurrences and compute statistics"
+        needs_coordination:
+          - "Provide examples to Document Builder"
+        needs_approval: []
+
+    - name: "Analytics & Intelligence"
+      purpose: "Analyze the PIPA corpus to extract trends, patterns, and insights about calls, modalities, and selection criteria"
+      tools: [data-analysis, statistics, visualization]
+      weight: 5
+      domain_context: "Central object: Analytics. Provides data-driven insights about the program evolution"
+      autonomy_levels:
+        can_do_alone:
+          - "Compute aggregate statistics (calls per year, modalidades, themes)"
+          - "Generate charts and visualizations"
+          - "Detect trends (PROMOB to PIPA transition)"
+          - "Compare normative rules vs. corpus reality"
+        needs_coordination:
+          - "Supply data to Builder for suggestion engine"
+        needs_approval: []
+
+    - name: "Bayesian Networks (Redes)"
+      purpose: "Model dependencies between variables (modality, theme, function, formation, quotas) using mutual information and conditional probability from the corpus"
+      tools: [bayesian-inference, probabilistic-modeling, network-visualization]
+      weight: 3
+      domain_context: "Central object: Dependency graph. Reveals how variables condition each other in real PIPA calls"
+      autonomy_levels:
+        can_do_alone:
+          - "Compute mutual information between variable pairs"
+          - "Generate DAG from corpus data"
+          - "Calculate conditional probabilities P(target|source)"
+          - "Suggest modality based on evidence (theme + function)"
+          - "Find variables that best explain each other"
+        needs_coordination:
+          - "Feed modality suggestions to Document Builder"
+        needs_approval: []
+
+    - name: "Pipeline & Admin"
+      purpose: "Manage data pipeline — fetch PDFs from IPEA portal, extract text, update corpus, and monitor system health"
+      tools: [web-scraping, pdf-processing, data-pipeline, monitoring]
+      weight: 3
+      domain_context: "Central object: System administration. Keeps the data fresh and the system operational"
+      autonomy_levels:
+        can_do_alone:
+          - "Run PDF fetch pipeline"
+          - "Monitor pipeline status and logs"
+          - "Check system memory and health"
+        needs_coordination: []
+        needs_approval:
+          - "Replace or update corpus data"
+          - "Modify normative rules"
+
+  system_2:
+    coordination_rules:
+      - trigger: "User starts a new document"
+        action: "Document Builder requests modality suggestions from Bayesian Networks and typical patterns from Corpus Explorer"
+      - trigger: "Corpus Explorer finds new relevant examples"
+        action: "Notify Document Builder of available templates"
+      - trigger: "Pipeline completes data refresh"
+        action: "Invalidate analytics cache and notify all units of new data"
+    conflict_detection:
+      resource_overlaps: false
+      deadline_conflicts: false
+      output_contradictions: true
+    escalation_to_s3_after: "24h"
+
+  system_3:
+    kpi_list:
+      - "Documents generated per session"
+      - "Compliance check pass rate"
+      - "User satisfaction with suggestions"
+    triple_index:
+      actuality: "Current document generation speed and compliance rate"
+      capability: "Maximum throughput with all suggestion engines active"
+      potentiality: "Achievable with automated data pipeline and expanded corpus"
+
+  human_in_the_loop:
+    notification_channel: "in-app"
+    approval_required:
+      - "final_document_publication"
+      - "corpus_data_update"
+      - "normative_rule_change"
+    review_required:
+      - "generated_profile_text"
+      - "generated_criteria_text"
+      - "compliance_warnings"

@@ -6,7 +6,7 @@ import { BudgetStep } from '../components/wizard/BudgetStep';
 import { HitlStep } from '../components/wizard/HitlStep';
 import { ReviewStep } from '../components/wizard/ReviewStep';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronRight } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 const STEPS = [TemplateStep, IdentityStep, UnitsStep, BudgetStep, HitlStep, ReviewStep];
 const STEP_LABELS = ['Template', 'Identity', 'Units', 'Budget', 'HITL', 'Review'];

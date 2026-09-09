@@ -18,6 +18,7 @@ class AttachmentMeta:
     id: str
     filename: str
     content_type: str
+    sha256: str = ""  # identidade do conteúdo (proveniência do chat)
 
 
 @dataclass
@@ -60,7 +61,12 @@ class ChatSession:
                 "content": m.content,
                 "timestamp": m.timestamp,
                 "attachments": [
-                    {"id": a.id, "filename": a.filename, "type": a.content_type}
+                    {
+                        "id": a.id,
+                        "filename": a.filename,
+                        "type": a.content_type,
+                        "sha256": a.sha256,
+                    }
                     for a in m.attachments
                 ],
             }

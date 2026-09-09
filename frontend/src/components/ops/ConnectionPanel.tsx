@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Plug, Unplug } from 'lucide-react';
 import { useOpsStore } from '../../store/useOpsStore';
 import type { RuntimeType } from '../../types';

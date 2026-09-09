@@ -299,6 +299,17 @@ def calculate_budget(config: dict[str, Any]) -> BudgetPlan:
     weights = [float(u.get("weight", 5)) for u in s1_units] if s1_units else [5.0]
     total_weight = sum(weights) or 1.0
 
+    if not s1_units:
+        allocations.append(
+            BudgetAllocation(
+                system="S1",
+                friendly_name=FRIENDLY_NAMES["S1"],
+                monthly_usd=round(s1_budget, 2),
+                model=routing["s1_routine"],
+                percentage=round(SYSTEM_WEIGHT["S1"] * 100, 1),
+            )
+        )
+
     for i, unit in enumerate(s1_units):
         w = weights[i]
         unit_budget = s1_budget * (w / total_weight)

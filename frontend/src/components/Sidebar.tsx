@@ -1,20 +1,21 @@
-import { MessageSquare, Wand2, LayoutDashboard, Radio, Play, RotateCcw } from 'lucide-react';
+import { MessageSquare, Wand2, LayoutDashboard, Radio, Play, RotateCcw, Building2 } from 'lucide-react';
 import { useConfigStore } from '../store/useConfigStore';
 import { useChatStore } from '../store/useChatStore';
 import { useOpsStore } from '../store/useOpsStore';
 
-type View = 'chat' | 'wizard' | 'dashboard' | 'opsroom' | 'simulation';
+type View = 'chat' | 'wizard' | 'dashboard' | 'opsroom' | 'simulation' | 'cda';
 
 const NAV_ITEMS: { key: View; label: string; icon: typeof MessageSquare }[] = [
   { key: 'chat', label: 'Chat', icon: MessageSquare },
   { key: 'wizard', label: 'Wizard', icon: Wand2 },
+  { key: 'cda', label: 'Sala Op.', icon: Building2 },
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'opsroom', label: 'Ops Room', icon: Radio },
   { key: 'simulation', label: 'Simulate', icon: Play },
 ];
 
 export function Sidebar() {
-  const { view, setView, setWizardStep, resetConfig, config, wizardStep } = useConfigStore();
+  const { view, setView, setWizardStep, resetConfig, config } = useConfigStore();
   const chatMessages = useChatStore((s) => s.messages);
   const opsConnected = useOpsStore((s) => s.connected);
 

@@ -79,6 +79,7 @@ export function ChatWindow() {
       if (!sid) {
         sid = await startSession();
       }
+      if (!sid) return;
 
       // Upload pending files
       const uploadedAttachments: ChatAttachment[] = [];

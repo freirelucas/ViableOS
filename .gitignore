@@ -20,3 +20,6 @@ frontend/dist/
 *.swp
 *.swo
 .worktrees/
+
+# CDA — estado runtime do ledger (CDA_STATE_DIR)
+data/

@@ -4,6 +4,7 @@ import { WizardPage } from './pages/WizardPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { OpsRoomPage } from './pages/OpsRoomPage';
 import { SimulationPage } from './pages/SimulationPage';
+import { CDAPage } from './pages/CDAPage';
 import { useConfigStore } from './store/useConfigStore';
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
         {view === 'dashboard' && <DashboardPage />}
         {view === 'opsroom' && <OpsRoomPage />}
         {view === 'simulation' && <SimulationPage />}
+        {view === 'cda' && <CDAPage />}
       </main>
     </div>
   );
