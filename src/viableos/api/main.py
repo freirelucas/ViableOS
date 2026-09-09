@@ -23,7 +23,7 @@ from viableos.cda.recursao.clock import sistema_clocks, FrequenciaClock
 
 app = FastAPI(
     title="ViableOS API",
-    version="0.3.0",
+    version="0.3.0rc1",
     description="REST API for the ViableOS multi-agent design tool",
 )
 
@@ -76,4 +76,9 @@ async def startup_all() -> None:
 
 @app.get("/health")
 def health_check() -> dict[str, str]:
-    return {"status": "ok", "version": "0.3.0"}
+    from viableos.cda import provenancia
+    return {
+        "status": "ok",
+        "version": "0.3.0rc1",
+        "modo": "ledger" if provenancia.ledger.habilitado else "demo",
+    }

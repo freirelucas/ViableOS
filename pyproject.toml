@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "viableos"
-version = "0.2.0"
+version = "0.3.0rc1"
 description = "The operating system for viable AI agent organizations"
 readme = "README.md"
 license = "MIT"
