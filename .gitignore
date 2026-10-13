@@ -23,3 +23,10 @@ frontend/dist/
 
 # CDA — estado runtime do ledger (CDA_STATE_DIR)
 data/
+
+# secrets - nunca versionar
+*.pem
+*.key
+*.secrets
+secrets/
+credentials/
