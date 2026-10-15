@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ipeagpt": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "IPEA GPT",
+      "options": {
+        "baseURL": "https://ipeagpt.ipea.gov.br/api/v1",
+        "apiKey": "{env:IPEAGPT_API_KEY}"
+      },
+      "models": {
+        "deepseek-v4.1-flash": {
+          "name": "ipeagpt-deepseek-v4.1-flash"
+        },
+        "glm-5.3": {
+          "name": "ipeagpt-glm-5.3"
+        }
+      }
+    }
+  }
+}
